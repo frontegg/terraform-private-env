@@ -1,0 +1,455 @@
+2025-06-19 14:55:12 - INFO - [setup_logging] - --- Logging system initialized ---
+2025-06-19 14:55:12 - INFO - [setup_logging] - Script started by user: eyal.tam on host: F-eyal-tam
+2025-06-19 14:55:12 - INFO - [print_welcome_message] - 
+                    _____                _                   
+                   |  ___| __ ___  _ __ | |_ ___  __ _  __ _ 
+                   | |_ | '__/ _ \| '_ \| __/ _ \/ _` |/ _` |
+                   |  _|| | | (_) | | | | ||  __/ (_| | (_| |
+                   |_|  |_|  \___/|_| |_|\__\___|\__, |\__, |
+                                                 |___/ |___/ 
+               ____       _            _         _____            
+              |  _ \ _ __(_)_   ____ _| |_ ___  | ____|_ ____   __
+              | |_) | '__| \ \ / / _` | __/ _ \ |  _| | '_ \ \ / /
+              |  __/| |  | |\ V / (_| | ||  __/ | |___| | | \ V / 
+              |_|   |_|  |_| \_/ \__,_|\__\___| |_____|_| |_|\_/  
+                                                                  
+                           ____       _               
+                          / ___|  ___| |_ _   _ _ __  
+                          \___ \ / _ \ __| | | | '_ \ 
+                           ___) |  __/ |_| |_| | |_) |
+                          |____/ \___|\__|\__,_| .__/ 
+                                               |_|    
+
+2025-06-19 14:55:12 - INFO - [print_version] - Current script version: 0.1.0
+2025-06-19 14:55:12 - INFO - [print_welcome_message] - Welcome message displayed
+2025-06-19 14:55:12 - INFO - [print_section] - --- Section: Initial System Check ---
+2025-06-19 14:55:12 - INFO - [print_section] - --- Section: System Scan ---
+2025-06-19 14:55:12 - INFO - [print_info] - Checking Python version...
+2025-06-19 14:55:12 - INFO - [print_success] - Success: Python version 3.13.4 (Required: >= 3.8)
+2025-06-19 14:55:12 - INFO - [print_info] - Checking system resources...
+2025-06-19 14:55:12 - INFO - [print_success] - Success: Memory: 36.0 GB (Required: >= 4 GB)
+2025-06-19 14:55:12 - INFO - [print_success] - Success: Disk space (/): 113.2 GB free (Required: >= 20 GB)
+2025-06-19 14:55:12 - INFO - [print_info] - Checking for aws...
+2025-06-19 14:55:13 - INFO - [print_success] - Success: aws found: aws-cli/2.22.17 Python/3.12.6 Darwin/24.5.0 exe/x86_64
+2025-06-19 14:55:13 - INFO - [check_cli_tool] - aws found: aws-cli/2.22.17 Python/3.12.6 Darwin/24.5.0 exe/x86_64
+2025-06-19 14:55:13 - INFO - [print_info] - Checking for terraform...
+2025-06-19 14:55:13 - INFO - [print_success] - Success: terraform found: Terraform v1.10.3 on darwin_arm64  Your version of Terraform is out of date! The latest version is 1.12.2. You can update by downloading from https://www.terraform.io/downloads.html
+2025-06-19 14:55:13 - INFO - [check_cli_tool] - terraform found: Terraform v1.10.3 on darwin_arm64  Your version of Terraform is out of date! The latest version is 1.12.2. You can update by downloading from https://www.terraform.io/downloads.html
+2025-06-19 14:55:13 - INFO - [print_info] - Checking for kubectl...
+2025-06-19 14:55:13 - INFO - [print_success] - Success: kubectl found: Client Version: v1.32.3 Kustomize Version: v5.5.0
+2025-06-19 14:55:13 - INFO - [check_cli_tool] - kubectl found: Client Version: v1.32.3 Kustomize Version: v5.5.0
+2025-06-19 14:55:13 - INFO - [print_info] - Checking Python dependencies...
+2025-06-19 14:55:16 - INFO - [print_success] - Success: All required Python packages verified.
+2025-06-19 14:55:16 - INFO - [print_info] - Checking network connectivity to https://google.com...
+2025-06-19 14:55:17 - INFO - [print_success] - Success: Network connectivity to https://google.com successful (Status: 200).
+2025-06-19 14:55:17 - INFO - [print_success] - Success: All system checks passed!
+2025-06-19 14:55:17 - INFO - [run_system_scan] - System scan completed. Overall result: Passed
+2025-06-19 14:55:17 - INFO - [print_success] - Success: System checks completed successfully.
+2025-06-19 14:55:17 - INFO - [print_info] - Checking AWS credentials...
+2025-06-19 14:55:17 - INFO - [load] - Found credentials in shared credentials file: ~/.aws/credentials
+2025-06-19 14:55:17 - WARNING - [get_aws_identity] - Failed to get AWS caller identity: An error occurred (ExpiredToken) when calling the GetCallerIdentity operation: The security token included in the request is expired
+2025-06-19 14:55:17 - WARNING - [print_warning] - Could not validate AWS credentials using default methods.
+2025-06-19 14:55:17 - INFO - [check_aws_credentials_configured] - AWS credentials file found at /Users/eyal.tam/.aws/credentials.
+2025-06-19 14:55:17 - WARNING - [print_warning] - Credentials might be configured but are invalid or lack permissions.
+2025-06-19 14:55:17 - INFO - [get_input] - Input prompt: Credentials seem invalid. Reconfigure interactively? (y/n) [n]
+2025-06-19 14:55:22 - INFO - [get_input] - User input (default): False
+2025-06-19 14:55:22 - ERROR - [print_error] - Proceeding with potentially invalid credentials.
+2025-06-19 14:55:22 - ERROR - [ensure_aws_credentials] - Proceeding with potentially invalid credentials.
+2025-06-19 14:55:22 - WARNING - [print_warning] - AWS credentials check completed with warnings. You may continue, but AWS operations might fail.
+2025-06-19 14:55:22 - INFO - [print_section] - --- Section: Main Menu ---
+2025-06-19 14:55:22 - INFO - [get_input] - Input prompt: Select an option (1-4) [1]
+2025-06-19 14:55:26 - INFO - [get_input] - User input (default): 1
+2025-06-19 14:55:26 - INFO - [print_section] - --- Section: Create Deployment Configuration ---
+2025-06-19 14:55:26 - INFO - [print_info] - This will generate the 'config.yaml' file based on your input.
+2025-06-19 14:55:26 - INFO - [print_subsection] - Subsection: Environment Details
+2025-06-19 14:55:26 - INFO - [get_input] - Input prompt: Customer Name [private-env]
+2025-06-19 14:55:27 - INFO - [get_input] - User input (default): private-env
+2025-06-19 14:55:27 - INFO - [get_input] - Input prompt: Environment Name [prod]
+2025-06-19 14:55:28 - INFO - [get_input] - User input (default): prod
+2025-06-19 14:55:28 - INFO - [print_subsection] - Subsection: AWS Region
+2025-06-19 14:55:28 - INFO - [print_info] - Fetching available AWS regions...
+2025-06-19 14:55:29 - WARNING - [print_warning] - Failed to fetch live AWS regions: An error occurred (RequestExpired) when calling the DescribeRegions operation: Request has expired.. Using static list.
+2025-06-19 14:55:29 - WARNING - [get_available_aws_regions] - Failed to fetch live AWS regions: An error occurred (RequestExpired) when calling the DescribeRegions operation: Request has expired.. Using static list.
+2025-06-19 14:55:29 - INFO - [get_input] - Input prompt: Select region number (1-12) [9]
+2025-06-19 14:55:30 - INFO - [get_input] - User input (default): 9
+2025-06-19 14:55:30 - INFO - [print_success] - Success: Selected region: us-east-1 (US East (N. Virginia))
+2025-06-19 14:55:30 - INFO - [get_region_selection] - User selected region 9: us-east-1
+2025-06-19 14:55:30 - INFO - [print_subsection] - Subsection: VPC Configuration
+2025-06-19 14:55:30 - INFO - [get_input] - Input prompt: Create New VPC? (y/n) [n]
+2025-06-19 14:55:33 - INFO - [get_input] - User input: Yes
+2025-06-19 14:55:33 - INFO - [get_input] - Input prompt: New VPC CIDR Block [10.0.0.0/16]
+2025-06-19 14:55:33 - INFO - [get_input] - User input (default): 10.0.0.0/16
+2025-06-19 14:55:33 - INFO - [print_subsection] - Subsection: Secrets Manager
+2025-06-19 14:55:33 - INFO - [get_input] - Input prompt: Secrets Recovery Window (days, 7-30, or 0 for immediate delete) [7]
+2025-06-19 14:55:35 - INFO - [get_input] - User input (default): 7
+2025-06-19 14:55:35 - INFO - [print_subsection] - Subsection: MSK (Managed Kafka)
+2025-06-19 14:55:35 - INFO - [get_input] - Input prompt: Enable MSK? (y/n) [n]
+2025-06-19 14:55:37 - INFO - [get_input] - User input: Yes
+2025-06-19 14:55:37 - INFO - [get_input] - Input prompt: MSK Kafka Version [3.6.0]
+2025-06-19 14:55:38 - INFO - [get_input] - User input (default): 3.6.0
+2025-06-19 14:55:38 - INFO - [get_input] - Input prompt: Number of Broker Nodes [3]
+2025-06-19 14:55:38 - INFO - [get_input] - User input (default): 3
+2025-06-19 14:55:38 - INFO - [get_input] - Input prompt: Broker Volume Size (GB) [500]
+2025-06-19 14:55:38 - INFO - [get_input] - User input (default): 500
+2025-06-19 14:55:38 - INFO - [get_input] - Input prompt: Broker Instance Type [kafka.m5.large]
+2025-06-19 14:55:38 - INFO - [get_input] - User input (default): kafka.m5.large
+2025-06-19 14:55:38 - INFO - [get_input] - Input prompt: Enable MSK logs? (y/n) [y]
+2025-06-19 14:55:39 - INFO - [get_input] - User input (default): True
+2025-06-19 14:55:39 - INFO - [get_input] - Input prompt: MSK scaling max capacity [500]
+2025-06-19 14:55:39 - INFO - [get_input] - User input (default): 500
+2025-06-19 14:55:39 - INFO - [get_input] - Input prompt: MSK scaling target value [60]
+2025-06-19 14:55:39 - INFO - [get_input] - User input (default): 60
+2025-06-19 14:55:39 - INFO - [get_input] - Input prompt: Allow UNSECURE unauthenticated access to MSK? (Not Recommended) (y/n) [y]
+2025-06-19 14:55:40 - INFO - [get_input] - User input (default): True
+2025-06-19 14:55:40 - INFO - [get_input] - Input prompt: Enable SASL/IAM authentication for MSK? (y/n) [y]
+2025-06-19 14:55:40 - INFO - [get_input] - User input (default): True
+2025-06-19 14:55:40 - INFO - [get_input] - Input prompt: Enable SASL/SCRAM authentication for MSK? (y/n) [n]
+2025-06-19 14:55:41 - INFO - [get_input] - User input (default): False
+2025-06-19 14:55:41 - INFO - [get_input] - Input prompt: Encryption in transit client broker [PLAINTEXT]
+2025-06-19 14:55:41 - INFO - [get_input] - User input (default): PLAINTEXT
+2025-06-19 14:55:41 - INFO - [get_input] - Input prompt: Enable Debezium connector? (y/n) [n]
+2025-06-19 14:55:42 - INFO - [get_input] - User input (default): False
+2025-06-19 14:55:42 - INFO - [print_subsection] - Subsection: MySQL (RDS)
+2025-06-19 14:55:42 - INFO - [get_input] - Input prompt: Enable MySQL? (y/n) [n]
+2025-06-19 14:55:45 - INFO - [get_input] - User input: Yes
+2025-06-19 14:55:45 - INFO - [get_input] - Input prompt: MySQL Version [8.0.40]
+2025-06-19 14:55:45 - INFO - [get_input] - User input (default): 8.0.40
+2025-06-19 14:55:45 - INFO - [get_input] - Input prompt: MySQL Family [mysql8.0]
+2025-06-19 14:55:46 - INFO - [get_input] - User input (default): mysql8.0
+2025-06-19 14:55:46 - INFO - [get_input] - Input prompt: MySQL Major Engine Version [8.0]
+2025-06-19 14:55:46 - INFO - [get_input] - User input (default): 8.0
+2025-06-19 14:55:46 - INFO - [get_input] - Input prompt: MySQL Instance Class [db.t3.medium]
+2025-06-19 14:55:46 - INFO - [get_input] - User input (default): db.t3.medium
+2025-06-19 14:55:46 - INFO - [get_input] - Input prompt: MySQL Storage Type (e.g., gp3, io1) [gp3]
+2025-06-19 14:55:47 - INFO - [get_input] - User input (default): gp3
+2025-06-19 14:55:47 - INFO - [get_input] - Input prompt: Initial Storage (GB) [100]
+2025-06-19 14:55:49 - INFO - [get_input] - User input (default): 100
+2025-06-19 14:55:49 - INFO - [get_input] - Input prompt: Maximum Storage (GB) [500]
+2025-06-19 14:55:50 - INFO - [get_input] - User input (default): 500
+2025-06-19 14:55:50 - INFO - [get_input] - Input prompt: MySQL Port [3306]
+2025-06-19 14:55:51 - INFO - [get_input] - User input (default): 3306
+2025-06-19 14:55:51 - INFO - [get_input] - Input prompt: Enable Multi-AZ? (y/n) [n]
+2025-06-19 14:55:53 - INFO - [get_input] - User input (default): False
+2025-06-19 14:55:53 - INFO - [get_input] - Input prompt: Maintenance Window (ddd:hh:mm-ddd:hh:mm) [sun:04:00-sun:05:00]
+2025-06-19 14:55:55 - INFO - [get_input] - User input (default): sun:04:00-sun:05:00
+2025-06-19 14:55:55 - INFO - [get_input] - Input prompt: Backup Window (hh:mm-hh:mm) [03:00-04:00]
+2025-06-19 14:55:56 - INFO - [get_input] - User input (default): 03:00-04:00
+2025-06-19 14:55:56 - INFO - [get_input] - Input prompt: MySQL Backup Retention Period (days) [7]
+2025-06-19 14:55:57 - INFO - [get_input] - User input (default): 7
+2025-06-19 14:55:57 - INFO - [get_input] - Input prompt: Create CloudWatch log group for MySQL? (y/n) [y]
+2025-06-19 14:55:59 - INFO - [get_input] - User input (default): True
+2025-06-19 14:55:59 - INFO - [get_input] - Input prompt: Skip final snapshot when deleting MySQL? (y/n) [n]
+2025-06-19 14:56:00 - INFO - [get_input] - User input (default): False
+2025-06-19 14:56:00 - INFO - [get_input] - Input prompt: Enable deletion protection for MySQL? (y/n) [y]
+2025-06-19 14:56:01 - INFO - [get_input] - User input (default): True
+2025-06-19 14:56:01 - INFO - [get_input] - Input prompt: Enable performance insights for MySQL? (y/n) [y]
+2025-06-19 14:56:02 - INFO - [get_input] - User input (default): True
+2025-06-19 14:56:02 - INFO - [get_input] - Input prompt: Performance insights retention period (days) [7]
+2025-06-19 14:56:03 - INFO - [get_input] - User input (default): 7
+2025-06-19 14:56:03 - INFO - [print_subsection] - Subsection: Redis (ElastiCache)
+2025-06-19 14:56:03 - INFO - [get_input] - Input prompt: Enable Redis? (y/n) [n]
+2025-06-19 14:56:04 - INFO - [get_input] - User input: Yes
+2025-06-19 14:56:04 - INFO - [get_input] - Input prompt: Redis Version [7.0]
+2025-06-19 14:56:04 - INFO - [get_input] - User input (default): 7.0
+2025-06-19 14:56:04 - INFO - [get_input] - Input prompt: Redis Family [redis7]
+2025-06-19 14:56:05 - INFO - [get_input] - User input (default): redis7
+2025-06-19 14:56:05 - INFO - [get_input] - Input prompt: Redis Node Type [cache.t3.medium]
+2025-06-19 14:56:06 - INFO - [get_input] - User input (default): cache.t3.medium
+2025-06-19 14:56:06 - INFO - [get_input] - Input prompt: Number of cache [2]
+2025-06-19 14:56:07 - INFO - [get_input] - User input (default): 2
+2025-06-19 14:56:07 - INFO - [get_input] - Input prompt: Enable TLS for Redis? (y/n) [y]
+2025-06-19 14:56:07 - INFO - [get_input] - User input (default): True
+2025-06-19 14:56:07 - INFO - [get_input] - Input prompt: Enable Redis transit encryption? (recommended for production) (y/n) [n]
+2025-06-19 14:56:08 - INFO - [get_input] - User input (default): False
+2025-06-19 14:56:08 - INFO - [print_subsection] - Subsection: EKS (Managed Kubernetes)
+2025-06-19 14:56:08 - INFO - [get_input] - Input prompt: Enable EKS? (y/n) [n]
+2025-06-19 14:56:11 - INFO - [get_input] - User input: Yes
+2025-06-19 14:56:11 - INFO - [get_input] - Input prompt: EKS Kubernetes Version [1.32]
+2025-06-19 14:56:11 - INFO - [get_input] - User input (default): 1.32
+2025-06-19 14:56:11 - INFO - [get_input] - Input prompt: Node Group Min Size [2]
+2025-06-19 14:56:12 - INFO - [get_input] - User input (default): 2
+2025-06-19 14:56:12 - INFO - [get_input] - Input prompt: Node Group Max Size [5]
+2025-06-19 14:56:12 - INFO - [get_input] - User input (default): 5
+2025-06-19 14:56:12 - INFO - [get_input] - Input prompt: Node Group Desired Size [3]
+2025-06-19 14:56:12 - INFO - [get_input] - User input (default): 3
+2025-06-19 14:56:12 - INFO - [get_input] - Input prompt: EKS Cluster Name [frontegg-customer-env]
+2025-06-19 14:56:13 - INFO - [get_input] - User input (default): frontegg-customer-env
+2025-06-19 14:56:13 - INFO - [get_input] - Input prompt: EKS Node Group Capacity Type (ON_DEMAND or SPOT) [ON_DEMAND]
+2025-06-19 14:56:13 - INFO - [get_input] - User input (default): ON_DEMAND
+2025-06-19 14:56:13 - INFO - [get_input] - Input prompt: Enable EKS Auto Mode? (Advanced feature for automatic node management) (y/n) [n]
+2025-06-19 14:56:14 - INFO - [get_input] - User input (default): False
+2025-06-19 14:56:14 - INFO - [get_input] - Input prompt: Enable public access to EKS cluster endpoint? (y/n) [y]
+2025-06-19 14:56:14 - INFO - [get_input] - User input (default): True
+2025-06-19 14:56:14 - INFO - [get_input] - Input prompt: Allowed CIDR blocks for public access (comma-separated) [0.0.0.0/0]
+2025-06-19 14:56:15 - INFO - [get_input] - User input (default): 0.0.0.0/0
+2025-06-19 14:56:15 - INFO - [print_subsection] - Subsection: External Secrets Operator
+2025-06-19 14:56:15 - INFO - [get_input] - Input prompt: Enable External Secrets Operator? (y/n) [y]
+2025-06-19 14:56:17 - INFO - [get_input] - User input (default): True
+2025-06-19 14:56:17 - INFO - [get_input] - Input prompt: External Secrets Version [0.15.0]
+2025-06-19 14:56:18 - INFO - [get_input] - User input (default): 0.15.0
+2025-06-19 14:56:18 - INFO - [get_input] - Input prompt: External Secrets Replicas [2]
+2025-06-19 14:56:18 - INFO - [get_input] - User input (default): 2
+2025-06-19 14:56:18 - INFO - [get_input] - Input prompt: External Secrets Concurrent Processing [10]
+2025-06-19 14:56:20 - INFO - [get_input] - User input (default): 10
+2025-06-19 14:56:20 - INFO - [print_subsection] - Subsection: MongoDB (Atlas or External)
+2025-06-19 14:56:20 - INFO - [get_input] - Input prompt: Enter MongoDB endpoint (e.g., cluster0.mongodb.net) [mongodb://mongo-mongodb]
+2025-06-19 14:56:21 - INFO - [get_input] - User input (default): mongodb://mongo-mongodb
+2025-06-19 14:56:21 - INFO - [get_input] - Input prompt: Enter MongoDB username []
+2025-06-19 14:56:24 - INFO - [get_input] - User input: 'tttt' (validated)
+2025-06-19 14:56:24 - INFO - [get_input] - Input prompt: Enter MongoDB password []
+2025-06-19 14:56:25 - INFO - [get_input] - User input: 'tttt' (validated)
+2025-06-19 14:56:25 - INFO - [print_info] - MongoDB connection string: mongodb+srv://tttt:***@mongodb://mongo-mongodb
+2025-06-19 14:56:25 - INFO - [print_info] - MongoDB connection details will be used as provided.
+2025-06-19 14:56:25 - INFO - [print_success] - Success: Configuration file generated: /Users/eyal.tam/repo/terraform-private-env/scripts/config.yaml
+2025-06-19 14:56:25 - INFO - [create_deployment_configuration] - Configuration file generated: /Users/eyal.tam/repo/terraform-private-env/scripts/config.yaml
+2025-06-19 14:56:25 - INFO - [print_success] - Success: YAML validation successful for config.yaml
+2025-06-19 14:56:25 - INFO - [validate_yaml_file] - YAML validation successful for /Users/eyal.tam/repo/terraform-private-env/scripts/config.yaml
+2025-06-19 14:56:25 - INFO - [create_deployment_configuration] - Generated configuration printed to screen.
+2025-06-19 14:56:25 - INFO - [print_section] - --- Section: Main Menu ---
+2025-06-19 14:56:25 - INFO - [get_input] - Input prompt: Select an option (1-4) [1]
+2025-06-19 15:07:54 - INFO - [get_input] - User input (default): 1
+2025-06-19 15:07:54 - INFO - [print_section] - --- Section: Create Deployment Configuration ---
+2025-06-19 15:07:54 - INFO - [print_info] - This will generate the 'config.yaml' file based on your input.
+2025-06-19 15:07:54 - INFO - [print_subsection] - Subsection: Environment Details
+2025-06-19 15:07:54 - INFO - [get_input] - Input prompt: Customer Name [private-env]
+2025-06-19 15:07:56 - ERROR - [print_error] - 
+Input cancelled by user. Exiting.
+2025-06-19 15:07:56 - WARNING - [get_input] - Input cancelled by user (KeyboardInterrupt)
+2025-06-19 15:07:58 - INFO - [setup_logging] - --- Logging system initialized ---
+2025-06-19 15:07:58 - INFO - [setup_logging] - Script started by user: eyal.tam on host: F-eyal-tam
+2025-06-19 15:07:58 - INFO - [print_welcome_message] - 
+                    _____                _                   
+                   |  ___| __ ___  _ __ | |_ ___  __ _  __ _ 
+                   | |_ | '__/ _ \| '_ \| __/ _ \/ _` |/ _` |
+                   |  _|| | | (_) | | | | ||  __/ (_| | (_| |
+                   |_|  |_|  \___/|_| |_|\__\___|\__, |\__, |
+                                                 |___/ |___/ 
+               ____       _            _         _____            
+              |  _ \ _ __(_)_   ____ _| |_ ___  | ____|_ ____   __
+              | |_) | '__| \ \ / / _` | __/ _ \ |  _| | '_ \ \ / /
+              |  __/| |  | |\ V / (_| | ||  __/ | |___| | | \ V / 
+              |_|   |_|  |_| \_/ \__,_|\__\___| |_____|_| |_|\_/  
+                                                                  
+                           ____       _               
+                          / ___|  ___| |_ _   _ _ __  
+                          \___ \ / _ \ __| | | | '_ \ 
+                           ___) |  __/ |_| |_| | |_) |
+                          |____/ \___|\__|\__,_| .__/ 
+                                               |_|    
+
+2025-06-19 15:07:58 - INFO - [print_version] - Current script version: 0.1.0
+2025-06-19 15:07:58 - INFO - [print_welcome_message] - Welcome message displayed
+2025-06-19 15:07:58 - INFO - [print_section] - --- Section: Initial System Check ---
+2025-06-19 15:07:58 - INFO - [print_section] - --- Section: System Scan ---
+2025-06-19 15:07:58 - INFO - [print_info] - Checking Python version...
+2025-06-19 15:07:58 - INFO - [print_success] - Success: Python version 3.13.4 (Required: >= 3.8)
+2025-06-19 15:07:58 - INFO - [print_info] - Checking system resources...
+2025-06-19 15:07:58 - INFO - [print_success] - Success: Memory: 36.0 GB (Required: >= 4 GB)
+2025-06-19 15:07:58 - INFO - [print_success] - Success: Disk space (/): 113.1 GB free (Required: >= 20 GB)
+2025-06-19 15:07:58 - INFO - [print_info] - Checking for aws...
+2025-06-19 15:07:59 - INFO - [print_success] - Success: aws found: aws-cli/2.22.17 Python/3.12.6 Darwin/24.5.0 exe/x86_64
+2025-06-19 15:07:59 - INFO - [check_cli_tool] - aws found: aws-cli/2.22.17 Python/3.12.6 Darwin/24.5.0 exe/x86_64
+2025-06-19 15:07:59 - INFO - [print_info] - Checking for terraform...
+2025-06-19 15:07:59 - INFO - [print_success] - Success: terraform found: Terraform v1.10.3 on darwin_arm64  Your version of Terraform is out of date! The latest version is 1.12.2. You can update by downloading from https://www.terraform.io/downloads.html
+2025-06-19 15:07:59 - INFO - [check_cli_tool] - terraform found: Terraform v1.10.3 on darwin_arm64  Your version of Terraform is out of date! The latest version is 1.12.2. You can update by downloading from https://www.terraform.io/downloads.html
+2025-06-19 15:07:59 - INFO - [print_info] - Checking for kubectl...
+2025-06-19 15:07:59 - INFO - [print_success] - Success: kubectl found: Client Version: v1.32.3 Kustomize Version: v5.5.0
+2025-06-19 15:07:59 - INFO - [check_cli_tool] - kubectl found: Client Version: v1.32.3 Kustomize Version: v5.5.0
+2025-06-19 15:07:59 - INFO - [print_info] - Checking Python dependencies...
+2025-06-19 15:08:01 - INFO - [print_success] - Success: All required Python packages verified.
+2025-06-19 15:08:01 - INFO - [print_info] - Checking network connectivity to https://google.com...
+2025-06-19 15:08:02 - INFO - [print_success] - Success: Network connectivity to https://google.com successful (Status: 200).
+2025-06-19 15:08:02 - INFO - [print_success] - Success: All system checks passed!
+2025-06-19 15:08:02 - INFO - [run_system_scan] - System scan completed. Overall result: Passed
+2025-06-19 15:08:02 - INFO - [print_success] - Success: System checks completed successfully.
+2025-06-19 15:08:02 - INFO - [print_info] - Checking AWS credentials...
+2025-06-19 15:08:02 - INFO - [load] - Found credentials in shared credentials file: ~/.aws/credentials
+2025-06-19 15:08:03 - WARNING - [get_aws_identity] - Failed to get AWS caller identity: An error occurred (ExpiredToken) when calling the GetCallerIdentity operation: The security token included in the request is expired
+2025-06-19 15:08:03 - WARNING - [print_warning] - Could not validate AWS credentials using default methods.
+2025-06-19 15:08:03 - INFO - [check_aws_credentials_configured] - AWS credentials file found at /Users/eyal.tam/.aws/credentials.
+2025-06-19 15:08:03 - WARNING - [print_warning] - Credentials might be configured but are invalid or lack permissions.
+2025-06-19 15:08:03 - INFO - [get_input] - Input prompt: Credentials seem invalid. Reconfigure interactively? (y/n) [n]
+2025-06-19 15:08:04 - INFO - [get_input] - User input (default): False
+2025-06-19 15:08:04 - ERROR - [print_error] - Proceeding with potentially invalid credentials.
+2025-06-19 15:08:04 - ERROR - [ensure_aws_credentials] - Proceeding with potentially invalid credentials.
+2025-06-19 15:08:04 - WARNING - [print_warning] - AWS credentials check completed with warnings. You may continue, but AWS operations might fail.
+2025-06-19 15:08:04 - INFO - [print_section] - --- Section: Main Menu ---
+2025-06-19 15:08:04 - INFO - [get_input] - Input prompt: Select an option (1-4) [1]
+2025-06-19 15:08:05 - INFO - [get_input] - User input (default): 1
+2025-06-19 15:08:05 - INFO - [print_section] - --- Section: Create Deployment Configuration ---
+2025-06-19 15:08:05 - INFO - [print_info] - This will generate the 'config.yaml' file based on your input.
+2025-06-19 15:08:05 - WARNING - [print_warning] - Existing configuration file backed up to: config.yaml.20250619_150805.bak
+2025-06-19 15:08:05 - INFO - [create_deployment_configuration] - Backed up existing config file to /Users/eyal.tam/repo/terraform-private-env/config/config.yaml.20250619_150805.bak
+2025-06-19 15:08:05 - INFO - [print_subsection] - Subsection: Environment Details
+2025-06-19 15:08:05 - INFO - [get_input] - Input prompt: Customer Name [private-env]
+2025-06-19 15:08:06 - INFO - [get_input] - User input (default): private-env
+2025-06-19 15:08:06 - INFO - [get_input] - Input prompt: Environment Name [prod]
+2025-06-19 15:08:06 - INFO - [get_input] - User input (default): prod
+2025-06-19 15:08:06 - INFO - [print_subsection] - Subsection: AWS Region
+2025-06-19 15:08:06 - INFO - [print_info] - Fetching available AWS regions...
+2025-06-19 15:08:07 - WARNING - [print_warning] - Failed to fetch live AWS regions: An error occurred (RequestExpired) when calling the DescribeRegions operation: Request has expired.. Using static list.
+2025-06-19 15:08:07 - WARNING - [get_available_aws_regions] - Failed to fetch live AWS regions: An error occurred (RequestExpired) when calling the DescribeRegions operation: Request has expired.. Using static list.
+2025-06-19 15:08:07 - INFO - [get_input] - Input prompt: Select region number (1-12) [9]
+2025-06-19 15:08:07 - INFO - [get_input] - User input (default): 9
+2025-06-19 15:08:07 - INFO - [print_success] - Success: Selected region: us-east-1 (US East (N. Virginia))
+2025-06-19 15:08:07 - INFO - [get_region_selection] - User selected region 9: us-east-1
+2025-06-19 15:08:07 - INFO - [print_subsection] - Subsection: VPC Configuration
+2025-06-19 15:08:07 - INFO - [get_input] - Input prompt: Create New VPC? (y/n) [n]
+2025-06-19 15:08:09 - INFO - [get_input] - User input (default): False
+2025-06-19 15:08:09 - INFO - [print_info] - Checking AWS credentials...
+2025-06-19 15:08:09 - WARNING - [get_aws_identity] - Failed to get AWS caller identity: An error occurred (ExpiredToken) when calling the GetCallerIdentity operation: The security token included in the request is expired
+2025-06-19 15:08:09 - WARNING - [print_warning] - Could not validate AWS credentials using default methods.
+2025-06-19 15:08:09 - INFO - [check_aws_credentials_configured] - AWS credentials file found at /Users/eyal.tam/.aws/credentials.
+2025-06-19 15:08:09 - WARNING - [print_warning] - Credentials might be configured but are invalid or lack permissions.
+2025-06-19 15:08:09 - INFO - [get_input] - Input prompt: Credentials seem invalid. Reconfigure interactively? (y/n) [n]
+2025-06-19 15:08:10 - INFO - [get_input] - User input (default): False
+2025-06-19 15:08:10 - ERROR - [print_error] - Proceeding with potentially invalid credentials.
+2025-06-19 15:08:10 - ERROR - [ensure_aws_credentials] - Proceeding with potentially invalid credentials.
+2025-06-19 15:08:10 - INFO - [print_section] - --- Section: Main Menu ---
+2025-06-19 15:08:10 - INFO - [get_input] - Input prompt: Select an option (1-4) [1]
+2025-06-19 15:08:12 - INFO - [get_input] - User input (default): 1
+2025-06-19 15:08:12 - INFO - [print_section] - --- Section: Create Deployment Configuration ---
+2025-06-19 15:08:12 - INFO - [print_info] - This will generate the 'config.yaml' file based on your input.
+2025-06-19 15:08:12 - INFO - [print_subsection] - Subsection: Environment Details
+2025-06-19 15:08:12 - INFO - [get_input] - Input prompt: Customer Name [private-env]
+2025-06-19 15:08:13 - INFO - [get_input] - User input (default): private-env
+2025-06-19 15:08:13 - INFO - [get_input] - Input prompt: Environment Name [prod]
+2025-06-19 15:08:13 - INFO - [get_input] - User input (default): prod
+2025-06-19 15:08:13 - INFO - [print_subsection] - Subsection: AWS Region
+2025-06-19 15:08:13 - INFO - [get_input] - Input prompt: Select region number (1-12) [9]
+2025-06-19 15:08:14 - INFO - [get_input] - User input (default): 9
+2025-06-19 15:08:14 - INFO - [print_success] - Success: Selected region: us-east-1 (US East (N. Virginia))
+2025-06-19 15:08:14 - INFO - [get_region_selection] - User selected region 9: us-east-1
+2025-06-19 15:08:14 - INFO - [print_subsection] - Subsection: VPC Configuration
+2025-06-19 15:08:14 - INFO - [get_input] - Input prompt: Create New VPC? (y/n) [n]
+2025-06-19 15:08:17 - INFO - [get_input] - User input: Yes
+2025-06-19 15:08:17 - INFO - [get_input] - Input prompt: New VPC CIDR Block [10.0.0.0/16]
+2025-06-19 15:08:17 - INFO - [get_input] - User input (default): 10.0.0.0/16
+2025-06-19 15:08:17 - INFO - [print_subsection] - Subsection: Secrets Manager
+2025-06-19 15:08:17 - INFO - [get_input] - Input prompt: Secrets Recovery Window (days, 7-30, or 0 for immediate delete) [7]
+2025-06-19 15:08:18 - INFO - [get_input] - User input (default): 7
+2025-06-19 15:08:18 - INFO - [print_subsection] - Subsection: MSK (Managed Kafka)
+2025-06-19 15:08:18 - INFO - [get_input] - Input prompt: Enable MSK? (y/n) [n]
+2025-06-19 15:08:21 - INFO - [get_input] - User input: Yes
+2025-06-19 15:08:21 - INFO - [get_input] - Input prompt: MSK Kafka Version [3.6.0]
+2025-06-19 15:08:22 - INFO - [get_input] - User input (default): 3.6.0
+2025-06-19 15:08:22 - INFO - [get_input] - Input prompt: Number of Broker Nodes [3]
+2025-06-19 15:08:22 - INFO - [get_input] - User input (default): 3
+2025-06-19 15:08:22 - INFO - [get_input] - Input prompt: Broker Volume Size (GB) [500]
+2025-06-19 15:08:22 - INFO - [get_input] - User input (default): 500
+2025-06-19 15:08:22 - INFO - [get_input] - Input prompt: Broker Instance Type [kafka.m5.large]
+2025-06-19 15:08:22 - INFO - [get_input] - User input (default): kafka.m5.large
+2025-06-19 15:08:22 - INFO - [get_input] - Input prompt: Enable MSK logs? (y/n) [y]
+2025-06-19 15:08:22 - INFO - [get_input] - User input (default): True
+2025-06-19 15:08:22 - INFO - [get_input] - Input prompt: MSK scaling max capacity [500]
+2025-06-19 15:08:23 - INFO - [get_input] - User input (default): 500
+2025-06-19 15:08:23 - INFO - [get_input] - Input prompt: MSK scaling target value [60]
+2025-06-19 15:08:23 - INFO - [get_input] - User input (default): 60
+2025-06-19 15:08:23 - INFO - [get_input] - Input prompt: Allow UNSECURE unauthenticated access to MSK? (Not Recommended) (y/n) [y]
+2025-06-19 15:08:23 - INFO - [get_input] - User input (default): True
+2025-06-19 15:08:23 - INFO - [get_input] - Input prompt: Enable SASL/IAM authentication for MSK? (y/n) [y]
+2025-06-19 15:08:23 - INFO - [get_input] - User input (default): True
+2025-06-19 15:08:23 - INFO - [get_input] - Input prompt: Enable SASL/SCRAM authentication for MSK? (y/n) [n]
+2025-06-19 15:08:24 - INFO - [get_input] - User input (default): False
+2025-06-19 15:08:24 - INFO - [get_input] - Input prompt: Encryption in transit client broker [PLAINTEXT]
+2025-06-19 15:08:24 - INFO - [get_input] - User input (default): PLAINTEXT
+2025-06-19 15:08:24 - INFO - [get_input] - Input prompt: Enable Debezium connector? (y/n) [n]
+2025-06-19 15:08:25 - INFO - [get_input] - User input (default): False
+2025-06-19 15:08:25 - INFO - [print_subsection] - Subsection: MySQL (RDS)
+2025-06-19 15:08:25 - INFO - [get_input] - Input prompt: Enable MySQL? (y/n) [n]
+2025-06-19 15:08:26 - INFO - [get_input] - User input: Yes
+2025-06-19 15:08:26 - INFO - [get_input] - Input prompt: MySQL Version [8.0.40]
+2025-06-19 15:08:26 - INFO - [get_input] - User input (default): 8.0.40
+2025-06-19 15:08:26 - INFO - [get_input] - Input prompt: MySQL Family [mysql8.0]
+2025-06-19 15:08:27 - INFO - [get_input] - User input (default): mysql8.0
+2025-06-19 15:08:27 - INFO - [get_input] - Input prompt: MySQL Major Engine Version [8.0]
+2025-06-19 15:08:27 - INFO - [get_input] - User input (default): 8.0
+2025-06-19 15:08:27 - INFO - [get_input] - Input prompt: MySQL Instance Class [db.t3.medium]
+2025-06-19 15:08:27 - INFO - [get_input] - User input (default): db.t3.medium
+2025-06-19 15:08:27 - INFO - [get_input] - Input prompt: MySQL Storage Type (e.g., gp3, io1) [gp3]
+2025-06-19 15:08:27 - INFO - [get_input] - User input (default): gp3
+2025-06-19 15:08:27 - INFO - [get_input] - Input prompt: Initial Storage (GB) [100]
+2025-06-19 15:08:27 - INFO - [get_input] - User input (default): 100
+2025-06-19 15:08:27 - INFO - [get_input] - Input prompt: Maximum Storage (GB) [500]
+2025-06-19 15:08:28 - INFO - [get_input] - User input (default): 500
+2025-06-19 15:08:28 - INFO - [get_input] - Input prompt: MySQL Port [3306]
+2025-06-19 15:08:28 - INFO - [get_input] - User input (default): 3306
+2025-06-19 15:08:28 - INFO - [get_input] - Input prompt: Enable Multi-AZ? (y/n) [n]
+2025-06-19 15:08:29 - INFO - [get_input] - User input (default): False
+2025-06-19 15:08:29 - INFO - [get_input] - Input prompt: Maintenance Window (ddd:hh:mm-ddd:hh:mm) [sun:04:00-sun:05:00]
+2025-06-19 15:08:29 - INFO - [get_input] - User input (default): sun:04:00-sun:05:00
+2025-06-19 15:08:29 - INFO - [get_input] - Input prompt: Backup Window (hh:mm-hh:mm) [03:00-04:00]
+2025-06-19 15:08:30 - INFO - [get_input] - User input (default): 03:00-04:00
+2025-06-19 15:08:30 - INFO - [get_input] - Input prompt: MySQL Backup Retention Period (days) [7]
+2025-06-19 15:08:30 - INFO - [get_input] - User input (default): 7
+2025-06-19 15:08:30 - INFO - [get_input] - Input prompt: Create CloudWatch log group for MySQL? (y/n) [y]
+2025-06-19 15:08:30 - INFO - [get_input] - User input (default): True
+2025-06-19 15:08:30 - INFO - [get_input] - Input prompt: Skip final snapshot when deleting MySQL? (y/n) [n]
+2025-06-19 15:08:31 - INFO - [get_input] - User input (default): False
+2025-06-19 15:08:31 - INFO - [get_input] - Input prompt: Enable deletion protection for MySQL? (y/n) [y]
+2025-06-19 15:08:31 - INFO - [get_input] - User input (default): True
+2025-06-19 15:08:31 - INFO - [get_input] - Input prompt: Enable performance insights for MySQL? (y/n) [y]
+2025-06-19 15:08:31 - INFO - [get_input] - User input (default): True
+2025-06-19 15:08:31 - INFO - [get_input] - Input prompt: Performance insights retention period (days) [7]
+2025-06-19 15:08:32 - INFO - [get_input] - User input (default): 7
+2025-06-19 15:08:32 - INFO - [print_subsection] - Subsection: Redis (ElastiCache)
+2025-06-19 15:08:32 - INFO - [get_input] - Input prompt: Enable Redis? (y/n) [n]
+2025-06-19 15:08:33 - INFO - [get_input] - User input: Yes
+2025-06-19 15:08:33 - INFO - [get_input] - Input prompt: Redis Version [7.0]
+2025-06-19 15:08:33 - INFO - [get_input] - User input (default): 7.0
+2025-06-19 15:08:33 - INFO - [get_input] - Input prompt: Redis Family [redis7]
+2025-06-19 15:08:33 - INFO - [get_input] - User input (default): redis7
+2025-06-19 15:08:33 - INFO - [get_input] - Input prompt: Redis Node Type [cache.t3.medium]
+2025-06-19 15:08:34 - INFO - [get_input] - User input (default): cache.t3.medium
+2025-06-19 15:08:34 - INFO - [get_input] - Input prompt: Number of cache [2]
+2025-06-19 15:08:34 - INFO - [get_input] - User input (default): 2
+2025-06-19 15:08:34 - INFO - [get_input] - Input prompt: Enable TLS for Redis? (y/n) [y]
+2025-06-19 15:08:34 - INFO - [get_input] - User input (default): True
+2025-06-19 15:08:34 - INFO - [get_input] - Input prompt: Enable Redis transit encryption? (recommended for production) (y/n) [n]
+2025-06-19 15:08:35 - INFO - [get_input] - User input (default): False
+2025-06-19 15:08:35 - INFO - [print_subsection] - Subsection: EKS (Managed Kubernetes)
+2025-06-19 15:08:35 - INFO - [get_input] - Input prompt: Enable EKS? (y/n) [n]
+2025-06-19 15:08:36 - INFO - [get_input] - User input: Yes
+2025-06-19 15:08:36 - INFO - [get_input] - Input prompt: EKS Kubernetes Version [1.32]
+2025-06-19 15:08:37 - INFO - [get_input] - User input (default): 1.32
+2025-06-19 15:08:37 - INFO - [get_input] - Input prompt: Node Group Min Size [2]
+2025-06-19 15:08:37 - INFO - [get_input] - User input (default): 2
+2025-06-19 15:08:37 - INFO - [get_input] - Input prompt: Node Group Max Size [5]
+2025-06-19 15:08:37 - INFO - [get_input] - User input (default): 5
+2025-06-19 15:08:37 - INFO - [get_input] - Input prompt: Node Group Desired Size [3]
+2025-06-19 15:08:37 - INFO - [get_input] - User input (default): 3
+2025-06-19 15:08:37 - INFO - [get_input] - Input prompt: EKS Cluster Name [frontegg-customer-env]
+2025-06-19 15:08:37 - INFO - [get_input] - User input (default): frontegg-customer-env
+2025-06-19 15:08:37 - INFO - [get_input] - Input prompt: EKS Node Group Capacity Type (ON_DEMAND or SPOT) [ON_DEMAND]
+2025-06-19 15:08:38 - INFO - [get_input] - User input (default): ON_DEMAND
+2025-06-19 15:08:38 - INFO - [get_input] - Input prompt: Enable EKS Auto Mode? (Advanced feature for automatic node management) (y/n) [n]
+2025-06-19 15:08:38 - INFO - [get_input] - User input (default): False
+2025-06-19 15:08:38 - INFO - [get_input] - Input prompt: Enable public access to EKS cluster endpoint? (y/n) [y]
+2025-06-19 15:08:38 - INFO - [get_input] - User input (default): True
+2025-06-19 15:08:38 - INFO - [get_input] - Input prompt: Allowed CIDR blocks for public access (comma-separated) [0.0.0.0/0]
+2025-06-19 15:08:38 - INFO - [get_input] - User input (default): 0.0.0.0/0
+2025-06-19 15:08:38 - INFO - [print_subsection] - Subsection: External Secrets Operator
+2025-06-19 15:08:38 - INFO - [get_input] - Input prompt: Enable External Secrets Operator? (y/n) [y]
+2025-06-19 15:08:40 - INFO - [get_input] - User input (default): True
+2025-06-19 15:08:40 - INFO - [get_input] - Input prompt: External Secrets Version [0.15.0]
+2025-06-19 15:08:41 - INFO - [get_input] - User input (default): 0.15.0
+2025-06-19 15:08:41 - INFO - [get_input] - Input prompt: External Secrets Replicas [2]
+2025-06-19 15:08:41 - INFO - [get_input] - User input (default): 2
+2025-06-19 15:08:41 - INFO - [get_input] - Input prompt: External Secrets Concurrent Processing [10]
+2025-06-19 15:08:41 - INFO - [get_input] - User input (default): 10
+2025-06-19 15:08:41 - INFO - [print_subsection] - Subsection: MongoDB (Atlas or External)
+2025-06-19 15:08:41 - INFO - [get_input] - Input prompt: Enter MongoDB endpoint (e.g., cluster0.mongodb.net) [mongodb://mongo-mongodb]
+2025-06-19 15:08:42 - INFO - [get_input] - User input (default): mongodb://mongo-mongodb
+2025-06-19 15:08:42 - INFO - [get_input] - Input prompt: Enter MongoDB username []
+2025-06-19 15:08:44 - INFO - [get_input] - User input: 'tttt' (validated)
+2025-06-19 15:08:44 - INFO - [get_input] - Input prompt: Enter MongoDB password []
+2025-06-19 15:08:46 - INFO - [get_input] - User input: 'tttt' (validated)
+2025-06-19 15:08:46 - INFO - [print_info] - MongoDB connection string: mongodb+srv://tttt:***@mongodb://mongo-mongodb
+2025-06-19 15:08:46 - INFO - [print_info] - MongoDB connection details will be used as provided.
+2025-06-19 15:08:46 - INFO - [print_success] - Success: Configuration file generated: /Users/eyal.tam/repo/terraform-private-env/config/config.yaml
+2025-06-19 15:08:46 - INFO - [create_deployment_configuration] - Configuration file generated: /Users/eyal.tam/repo/terraform-private-env/config/config.yaml
+2025-06-19 15:08:46 - INFO - [print_success] - Success: YAML validation successful for config.yaml
+2025-06-19 15:08:46 - INFO - [validate_yaml_file] - YAML validation successful for /Users/eyal.tam/repo/terraform-private-env/config/config.yaml
+2025-06-19 15:08:46 - INFO - [create_deployment_configuration] - Generated configuration printed to screen.
+2025-06-19 15:08:46 - INFO - [print_section] - --- Section: Main Menu ---
+2025-06-19 15:08:46 - INFO - [get_input] - Input prompt: Select an option (1-4) [1]

@@ -1,0 +1,145 @@
+global:
+  region: {{ region }}
+  environment: {{ environment }}
+  customer: {{ customer }}
+  project: frontegg-{{ customer }}
+settings:
+  vpc:
+    enabled: {{ vpc_enabled | bool_to_yaml }}
+    vpc_id: "{{ vpc_id | default('vpc-0000', true) }}"
+    cidr: "{{ vpc_cidr | default('10.0.0.0/16', true) }}"
+    subnets:
+      private: [{{ subnets.private | default('', true) }}]
+      intra: [{{ subnets.intra | default('', true) }}]
+  s3:
+    enabled: true
+  secretsManager:
+    secrets:
+      recovery_window_in_days: {{ secrets_recovery_window_in_days }}
+  msk:
+    config:
+      {% if msk_enabled %}
+      enabled: {{ msk_enabled | bool_to_yaml }}
+      {% else %}
+      enabled: false
+      {% endif %}
+      version: "{{ msk_version | default("3.6.0", true) }}"
+      number_of_broker_nodes: {{ msk_broker_nodes | default(3, true) }}
+      volume_size: {{ msk_volume_size | default(500, true) }}
+      broker_node_instance_type: "{{ msk_instance_type | default('kafka.m5.large', true) }}"
+      scaling_max_capacity: {{ msk_scaling_max | default(500) }}
+      scaling_target_value: {{ msk_scaling_target | default(60) }}
+      enable_msk_logs: {{ msk_logs_enabled | bool_to_yaml | default(true) }}
+      msk_bootstrap_brokers_plaintext: "{{ msk_bootstrap_brokers_plaintext | default('', true) }}"
+      msk_bootstrap_brokers_sasl_iam: "{{ msk_bootstrap_brokers_sasl_iam | default('', true) }}"
+      msk_bootstrap_brokers_sasl_scram: "{{ msk_bootstrap_brokers_sasl_scram | default('', true) }}"
+      msk_bootstrap_brokers_tls: "{{ msk_bootstrap_brokers_tls | default('', true) }}"
+      username: "{{ kafka_username | default('', true) }}"
+      password: "{{ kafka_password | default('', true) }}"
+      authentication:
+        unauthenticated: {{ msk_allow_unauthenticated | bool_to_yaml | default(false) }}
+        sasl:
+          iam: {{ msk_sasl_iam_enabled | bool_to_yaml | default(false) }}
+          scram: {{ msk_sasl_scram_enabled | bool_to_yaml | default(false) }}
+    connector:
+      debezium:
+        enabled: {{ debezium_enabled | bool_to_yaml | default(false) }}
+  mysql:
+    config:
+      {% if mysql_enabled %}
+      enabled: true
+      {% else %}
+      enabled: false
+      {% endif %}
+      family: "{{ mysql_family | default('mysql8.0', true) }}"
+      major_engine_version: "{{ mysql_major_version | default('8.0', true) }}"
+      engine_version: "{{ mysql_engine_version | default('8.0.40', true) }}"
+      instance_class: "{{ mysql_instance_class | default('db.t3.medium', true) }}"
+      storage:
+        type: "{{ mysql_storage_type | default('gp3') }}"
+        allocated: {{ mysql_storage | default(100) }}
+        max_allocated: {{ mysql_max_storage | default(500) }}
+      port: {{ mysql_port | default(3306) }}
+      multi_az: {{ mysql_multi_az | bool_to_yaml | default(false) }}
+      maintenance_window: "{{ mysql_maintenance_window | default('sun:04:00-sun:05:00') }}"
+      backup_window: "{{ mysql_backup_window | default('03:00-04:00') }}"
+      backup_retention_period: {{ mysql_backup_retention_period | default(7) }}
+      create_cloudwatch_log_group: {{ mysql_cloudwatch_logs | bool_to_yaml | default(true) }}
+      enabled_cloudwatch_logs_exports:
+        - general
+        - error
+        - slowquery
+        - audit
+      skip_final_snapshot: {{ mysql_skip_snapshot | bool_to_yaml | default(false) }}
+      deletion_protection: {{ mysql_deletion_protection | bool_to_yaml | default(true) }}
+      performance_insights_enabled: {{ mysql_performance_insights | bool_to_yaml | default(true) }}
+      performance_insights_retention_period: {{ mysql_performance_retention | default(7) }}
+      endpoint: "{{ mysql_endpoint | default('', true) }}"
+      username: "{{ mysql_username | default('root', true) }}"
+      password: "{{ mysql_password | default('', true) }}"
+  redis:
+    config:
+      {% if redis_enabled %}
+      enabled: true
+      {% else %}
+      enabled: false
+      {% endif %}
+      family: "{{ redis_family | default('redis7', true) }}"
+      engine_version: "{{ redis_engine_version | default('7.0', true) }}"
+      node_type: "{{ redis_node_type | default('cache.t3.medium', true) }}"
+      num_cache_clusters: {{ num_cache_clusters | default(2) }}
+      endpoint: "{{ redis_endpoint | default('', true) }}"
+      tls: {{ redis_tls | bool_to_yaml | default(true) }}
+      transit_encryption_enabled: {{ transit_encryption_enabled | bool_to_yaml | default(false) }}
+      username: "{{ redis_username | default('', true) }}"
+      password: "{{ redis_password | default('', true) }}"
+      port: "{{ redis_port | default('6379', true) }}"
+  mongo:
+    config:
+      endpoint: "{{ mongo_endpoint | default('', true) }}"
+      username: "{{ mongo_username | default('admin', true) }}"
+      password: "{{ mongo_password | default('', true) }}"
+  eks:
+    config:
+      {% if eks_enabled %}
+      enabled: true
+      {% else %}
+      enabled: false
+      {% endif %}
+      cluster:
+        name: {{ eks_cluster_name | default('frontegg-customer-env', true) }}
+        version: "{{ eks_version | default('1.32', true) }}"
+        endpoint_public_access: {{ cluster_endpoint_public_access | bool_to_yaml | default(true) }}
+        endpoint_public_access_cidrs:
+          - "{{ eks_cidrs | default('0.0.0.0/0') }}"
+      managed_node_groups:
+        capacity_type: "{{ eks_capacity_type | default('ON_DEMAND') }}"
+        instance_types:
+          {% for inst in eks_instance_types | default(['m5.large', 'm5.xlarge', 'm5.2xlarge','m5.4xlarge','m5d.large', 'm6i.large']) %}
+          - {{ inst }}
+          {% endfor %}
+        min_size: {{ eks_min_size }}
+        max_size: {{ eks_max_size }}
+        desired_size: {{ eks_desired_size }}
+      managed_node_groups_defaults:
+        instance_types:
+          {% for inst in eks_instance_types | default(['m6i.large', 'm6i.xlarge', 'm6i.2xlarge', 'm6i.4xlarge', 'm6i.8xlarge', 'm5.large', 'm5.xlarge', 'm5.2xlarge', 'm5.4xlarge', 'm5.8xlarge', 'm5d.large', 'm5d.xlarge', 'm5d.2xlarge', 'm5d.4xlarge', 'm5d.8xlarge']) %}
+          - {{ inst }}
+          {% endfor %}
+      auto_mode:
+        enabled: {{ eks_auto_mode_enabled | bool_to_yaml | default(false) }}
+  external_secrets:
+    config:
+      enabled: {{ external_secret_enabled | bool_to_yaml | default('false') }}
+      version: "{{ external_secret_version }}"
+      replicaCount: {{ external_secret_replicas | default(2) }}
+      concurrent: {{ external_secret_concurrent | default(10) }}
+
+
+
+
+
+# --- Auto Generated ---
+# generation timestamp: {{ generation_timestamp }}
+# generated by: {{ generated_by_user }}
+# generated on host: {{ generated_on_host }}

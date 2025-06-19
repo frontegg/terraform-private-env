@@ -1,4 +1,4 @@
-# Local .terraform directories
+ # Local .terraform directories
 .terraform/
 
 # .tfstate files
@@ -35,3 +35,4 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+.DS_Store
