@@ -15,7 +15,7 @@ permissions:
 jobs:
   destroy:
     runs-on: ubuntu-latest
-    if: github.event.inputs.confirm == 'destroy'
+    if: github.event.inputs.confirm == 'destroy' && (github.actor_association == 'MEMBER' || github.actor_association == 'OWNER')
     name: Terraform Destroy
     steps:
       - name: Checkout
