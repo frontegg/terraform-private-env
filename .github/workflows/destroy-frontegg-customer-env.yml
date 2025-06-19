@@ -1,0 +1,47 @@
+name: Frontegg Customer Environment - TF Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "destroy" to confirm you want to destroy the environment.'
+        required: true
+        default: ''
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'destroy'
+    name: Terraform Destroy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Init
+        id: init
+        run: terraform init \
+          -backend-config="bucket=frontegg-tfstate-109940070146-us-east-1" \
+          -backend-config="key=tf-state/frontegg/terraform.tfstate" \
+          -backend-config="region=us-east-1" \
+          -backend-config="dynamodb_table=frontegg-terraform-state-lock" \
+          -backend-config="encrypt=true"
+        working-directory: ./frontegg-customer-env
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
+        working-directory: ./frontegg-customer-env 
