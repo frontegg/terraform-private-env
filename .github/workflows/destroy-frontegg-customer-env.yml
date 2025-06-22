@@ -13,17 +13,9 @@ permissions:
   contents: read
 
 jobs:
-  debug-info:
-    runs-on: ubuntu-latest
-    name: Debug Info
-    steps:
-      - name: Dump github context
-        run: echo '${{ toJSON(github) }}'
-
   destroy:
-    needs: debug-info
     runs-on: ubuntu-latest
-    if: github.event.inputs.confirm == 'destroy' && (github.actor_association == 'MEMBER' || github.actor_association == 'OWNER')
+    if: github.event.inputs.confirm == 'destroy' && contains(fromJSON('["eyaltam1971"]'), github.actor)
     name: Terraform Destroy
     steps:
       - name: Checkout
