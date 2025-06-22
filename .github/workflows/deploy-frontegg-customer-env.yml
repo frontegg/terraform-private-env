@@ -1,4 +1,4 @@
-name: Frontegg Customer Environment - TF Apply
+name:  Create Customer Environment
 
 on:
   workflow_dispatch:
@@ -8,7 +8,15 @@ permissions:
   contents: read
 
 jobs:
+  debug-info:
+    runs-on: ubuntu-latest
+    name: Debug Info
+    steps:
+      - name: Dump github.actor_association
+        run: echo "github.actor_association is ${{ github.actor_association }}"
+
   apply:
+    needs: debug-info
     runs-on: ubuntu-latest
     name: Terraform Apply
     if: github.actor_association == 'MEMBER' || github.actor_association == 'OWNER'
