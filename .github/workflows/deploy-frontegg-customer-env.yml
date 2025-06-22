@@ -29,22 +29,20 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init \
-          -backend-config="bucket=frontegg-tfstate-109940070146-us-east-1" \
-          -backend-config="key=tf-state/frontegg/terraform.tfstate" \
-          -backend-config="region=us-east-1" \
-          -backend-config="dynamodb_table=frontegg-terraform-state-lock" \
-          -backend-config="encrypt=true"
-        working-directory: .
+        run: |
+          terraform init \
+            -backend-config="bucket=frontegg-tfstate-109940070146-us-east-1" \
+            -backend-config="key=tf-state/frontegg/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="dynamodb_table=frontegg-terraform-state-lock" \
+            -backend-config="encrypt=true"
 
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
-        working-directory: .
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
-        working-directory: .
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
@@ -54,7 +52,7 @@ jobs:
 
       - name: Helm Dependency Update
         run: helm dependency update
-        working-directory: .
+        working-directory: ./helm/external-secrets-objects
 
       - name: Deploy Frontegg Core Services
         run: helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace

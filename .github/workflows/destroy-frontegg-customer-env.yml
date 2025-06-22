@@ -34,12 +34,13 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init \
-          -backend-config="bucket=frontegg-tfstate-109940070146-us-east-1" \
-          -backend-config="key=tf-state/frontegg/terraform.tfstate" \
-          -backend-config="region=us-east-1" \
-          -backend-config="dynamodb_table=frontegg-terraform-state-lock" \
-          -backend-config="encrypt=true"
+        run: |
+          terraform init \
+            -backend-config="bucket=frontegg-tfstate-109940070146-us-east-1" \
+            -backend-config="key=tf-state/frontegg/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="dynamodb_table=frontegg-terraform-state-lock" \
+            -backend-config="encrypt=true"
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve 
