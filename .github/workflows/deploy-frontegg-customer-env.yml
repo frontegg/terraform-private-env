@@ -2,11 +2,6 @@ name: Frontegg Customer Environment - TF Apply
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'frontegg-customer-env/**'
-    branches:
-      - master
 
 permissions:
   id-token: write
@@ -40,16 +35,16 @@ jobs:
           -backend-config="region=us-east-1" \
           -backend-config="dynamodb_table=frontegg-terraform-state-lock" \
           -backend-config="encrypt=true"
-        working-directory: ./frontegg-customer-env
+        working-directory: .
 
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
-        working-directory: ./frontegg-customer-env
+        working-directory: .
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
-        working-directory: ./frontegg-customer-env
+        working-directory: .
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
@@ -59,7 +54,7 @@ jobs:
 
       - name: Helm Dependency Update
         run: helm dependency update
-        working-directory: ./frontegg-customer-env
+        working-directory: .
 
       - name: Deploy Frontegg Core Services
         run: helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace

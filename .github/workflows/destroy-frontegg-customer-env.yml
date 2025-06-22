@@ -40,8 +40,6 @@ jobs:
           -backend-config="region=us-east-1" \
           -backend-config="dynamodb_table=frontegg-terraform-state-lock" \
           -backend-config="encrypt=true"
-        working-directory: ./frontegg-customer-env
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
-        working-directory: ./frontegg-customer-env 
+        run: terraform destroy -auto-approve 
