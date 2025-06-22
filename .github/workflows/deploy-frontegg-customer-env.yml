@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Debug Info
     steps:
-      - name: Dump github.actor_association
-        run: echo "github.actor_association is ${{ github.actor_association }}"
+      - name: Dump github context
+        run: echo '${{ toJSON(github) }}'
 
   apply:
     needs: debug-info
