@@ -29,6 +29,7 @@ provider "aws" {
 }
 
 provider "kubernetes" {
+  alias = "eks"
   # Only configure if EKS is enabled or external cluster exists
   host                   = try(local.kubernetes_cluster_endpoint, null)
   cluster_ca_certificate = try(base64decode(local.kubernetes_cluster_ca_data), null)
@@ -44,6 +45,7 @@ provider "kubernetes" {
 }
 
 provider "helm" {
+  alias = "eks"
   kubernetes {
     host                   = try(local.kubernetes_cluster_endpoint, null)
     cluster_ca_certificate = try(base64decode(local.kubernetes_cluster_ca_data), null)

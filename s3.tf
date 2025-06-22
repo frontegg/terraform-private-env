@@ -25,6 +25,7 @@ module "policy" {
   acl                      = "private"
   control_object_ownership = true
   object_ownership         = "ObjectWriter"
+  force_destroy            = local.s3_force_destroy_buckets
   versioning = {
     enabled = true
   }
@@ -62,6 +63,7 @@ module "reporting-engine-triggered-reports" {
   acl                      = "private"
   control_object_ownership = true
   object_ownership         = "ObjectWriter"
+  force_destroy            = local.s3_force_destroy_buckets
   versioning = {
     enabled = true
   }
@@ -114,6 +116,7 @@ module "pricing-views-bundles" {
   bucket                   = "${local.pricing_views_bundles}-${random_string.suffix[0].result}"
   control_object_ownership = true
   object_ownership         = "ObjectWriter"
+  force_destroy            = local.s3_force_destroy_buckets
   ignore_public_acls       = true
   block_public_acls        = false
   block_public_policy      = false
@@ -182,6 +185,7 @@ module "dashboard-static-content" {
   bucket                   = "${local.dashboard_static_content_bucket_name}-${random_string.suffix[0].result}"
   control_object_ownership = true
   object_ownership         = "ObjectWriter"
+  force_destroy            = local.s3_force_destroy_buckets
   ignore_public_acls       = true
   block_public_acls        = false
   block_public_policy      = false
@@ -249,6 +253,7 @@ module "tenants-assets" {
   bucket                   = "${local.tenants_assets}-${random_string.suffix[0].result}"
   control_object_ownership = true
   object_ownership         = "ObjectWriter"
+  force_destroy            = local.s3_force_destroy_buckets
   ignore_public_acls       = true
   block_public_acls        = false
   block_public_policy      = false
@@ -308,6 +313,7 @@ module "s3_debezium_connector" {
   bucket                   = "frontegg-debezium-connector-${random_string.suffix[0].result}"
   control_object_ownership = true
   object_ownership         = "ObjectWriter"
+  force_destroy            = local.s3_force_destroy_buckets
   ignore_public_acls       = true
   versioning = {
     enabled = true
@@ -330,7 +336,7 @@ module "msk-logs" {
   acl                      = "private"
   control_object_ownership = true
   object_ownership         = "ObjectWriter"
-  force_destroy            = true
+  force_destroy            = local.s3_force_destroy_buckets
   versioning = {
     enabled = true
   }

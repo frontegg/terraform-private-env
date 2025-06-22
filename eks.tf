@@ -133,7 +133,7 @@ module "eks_auto_mode" {
 }
 
 resource "aws_iam_policy" "autoscaling" {
-  count  = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0 
+  count  = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0
   name   = "${local.environment}-autoscaling"
   policy = data.aws_iam_policy_document.autoscaling.json
 }
@@ -162,7 +162,7 @@ data "aws_iam_policy_document" "autoscaling" {
 }
 
 resource "aws_iam_policy" "route53" {
-  count  = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0 
+  count  = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0
   name   = "${local.environment}-route53"
   policy = data.aws_iam_policy_document.route53.json
 }
@@ -180,7 +180,7 @@ data "aws_iam_policy_document" "route53" {
 }
 
 resource "aws_iam_policy" "secret_manager" {
-  count  = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0 
+  count  = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0
   name   = "${local.environment}-secret_manager"
   policy = data.aws_iam_policy_document.secret_manager.json
 }
@@ -199,7 +199,7 @@ data "aws_iam_policy_document" "secret_manager" {
 }
 
 resource "aws_iam_policy" "load_balancing" {
-  count  = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0 
+  count  = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0
   name   = "${local.environment}-load_balancing"
   policy = data.aws_iam_policy_document.load_balancing.json
 }
@@ -238,7 +238,7 @@ data "aws_iam_policy_document" "load_balancing" {
 }
 
 module "ebs_csi_irsa_role" {
-  count   = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0 
+  count   = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.20"
 
@@ -255,7 +255,8 @@ module "ebs_csi_irsa_role" {
 
 # Create the gp3 StorageClass
 resource "kubernetes_storage_class" "gp3" {
-  count = local.config.settings.eks.config.enabled ? 1 : 0
+  provider = kubernetes.eks
+  count    = local.config.settings.eks.config.enabled ? 1 : 0
 
   metadata {
     name = "gp3"
@@ -275,7 +276,8 @@ resource "kubernetes_storage_class" "gp3" {
 }
 
 resource "kubernetes_storage_class" "gp3-high-performance" {
-  count = local.config.settings.eks.config.enabled ? 1 : 0
+  provider = kubernetes.eks
+  count    = local.config.settings.eks.config.enabled ? 1 : 0
 
   metadata {
     name = "gp3-high-performance"

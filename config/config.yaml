@@ -23,6 +23,7 @@ settings:
         ]
   s3:
     enabled: true
+    force_destroy_buckets: true
   secretsManager:
     secrets:
       recovery_window_in_days: 0
@@ -73,7 +74,7 @@ settings:
         - error
         - slowquery
         - audit
-      skip_final_snapshot: false
+      skip_final_snapshot: true
       deletion_protection: false
       performance_insights_enabled: true
       performance_insights_retention_period: 7
@@ -88,7 +89,7 @@ settings:
       node_type: "cache.t3.medium"
       num_cache_clusters: 2
       endpoint: "prod-7-0-redis.so7c2d.ng.0001.use1.cache.amazonaws.com:6379"
-      transit_encryption_enabled: false  
+      transit_encryption_enabled: false
       username: ""
       password: ""
       port: "6379"
@@ -104,7 +105,7 @@ settings:
       cluster:
         name: private-env-prod-eks
         version: "1.32"
-        endpoint_public_access: false
+        endpoint_public_access: true
         endpoint_public_access_cidrs:
           - "0.0.0.0/0"
       managed_node_groups:

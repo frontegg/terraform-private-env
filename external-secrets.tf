@@ -1,4 +1,5 @@
 resource "helm_release" "external_secrets" {
+  provider         = helm.eks
   count            = local.config.settings.external_secrets.config.enabled && local.kubernetes_cluster_name != null ? 1 : 0
   name             = "external-secrets"
   repository       = "https://charts.external-secrets.io"
@@ -178,6 +179,7 @@ resource "aws_iam_role_policy" "external_secret" {
 }
 
 resource "helm_release" "external_secrets_objects" {
+  provider         = helm.eks
   count            = local.config.settings.external_secrets.config.enabled && local.kubernetes_cluster_name != null ? 1 : 0
   name             = "external-secrets-objects"
   chart            = "${path.module}/helm/external-secrets-objects"
@@ -204,13 +206,12 @@ resource "helm_release" "external_secrets_objects" {
     })
   ]
 
-  # Remove explicit dependencies to prevent cycles during destruction
-  # depends_on = [
-  #   helm_release.external_secrets,
-  #   aws_iam_role.external_secrets,
-  #   aws_iam_role_policy_attachment.external_secrets,
-  #   module.eks
-  # ]
+  depends_on = [
+    helm_release.external_secrets,
+    aws_iam_role.external_secrets,
+    aws_iam_role_policy_attachment.external_secrets,
+    module.eks
+  ]
 
   lifecycle {
     ignore_changes = [

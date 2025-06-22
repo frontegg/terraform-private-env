@@ -41,9 +41,9 @@ module "msk_kafka_cluster" {
     }
   }
   create_scram_secret_association = local.msk_sasl_scram_enabled
-  scram_secret_association_secret_arn_list = [
+  scram_secret_association_secret_arn_list = local.msk_sasl_scram_enabled ? [
     aws_secretsmanager_secret.kafka_secret[0].arn
-  ]
+  ] : []
 
   create_connect_worker_configuration           = true
   connect_worker_config_name                    = "msk-connector-${local.environment}"
@@ -71,7 +71,7 @@ EOT
 }
 
 resource "aws_secretsmanager_secret" "kafka_secret" {
-  count                   = local.config.settings.msk.config.enabled ? 1 : 0
+  count                   = local.config.settings.msk.config.enabled && local.msk_sasl_scram_enabled ? 1 : 0
   name                    = "AmazonMSK_${local.environment}_secret"
   kms_key_id              = aws_kms_key.kafka_scram_key[0].key_id
   policy                  = data.aws_iam_policy_document.kafka_secret_policy.json
@@ -79,7 +79,7 @@ resource "aws_secretsmanager_secret" "kafka_secret" {
 }
 
 resource "aws_secretsmanager_secret_version" "kafka_secret_version" {
-  count         = local.config.settings.msk.config.enabled ? 1 : 0
+  count         = local.config.settings.msk.config.enabled && local.msk_sasl_scram_enabled ? 1 : 0
   secret_id     = aws_secretsmanager_secret.kafka_secret[0].id
   secret_string = jsonencode(local.kafka_secret_data)
 }
@@ -129,13 +129,13 @@ data "aws_iam_policy_document" "kafka_secret_policy" {
 }
 
 resource "aws_kms_key" "kafka_scram_key" {
-  count                   = local.config.settings.msk.config.enabled ? 1 : 0
+  count                   = local.config.settings.msk.config.enabled && local.msk_sasl_scram_enabled ? 1 : 0
   description             = "KMS key for kafka scram"
   deletion_window_in_days = 10
 }
 
 resource "aws_kms_alias" "kafka_scram_key_alias" {
-  count         = local.config.settings.msk.config.enabled ? 1 : 0
+  count         = local.config.settings.msk.config.enabled && local.msk_sasl_scram_enabled ? 1 : 0
   name          = "alias/${local.environment}/kafka/scram/key"
   target_key_id = aws_kms_key.kafka_scram_key[0].key_id
 }

@@ -34,7 +34,7 @@ locals {
     try(local.config.settings.eks.config.auto_mode.enabled, false) ?
     try(module.eks_auto_mode[0].cluster_oidc_issuer_url, null) :
     try(module.eks[0].cluster_oidc_issuer_url, null)
-  ) : (
+    ) : (
     local.kubernetes_cluster_name != null ?
     try(data.aws_eks_cluster.external[0].identity[0].oidc[0].issuer, null) :
     null
@@ -44,7 +44,7 @@ locals {
     try(local.config.settings.eks.config.auto_mode.enabled, false) ?
     try(module.eks_auto_mode[0].oidc_provider_arn, null) :
     try(module.eks[0].oidc_provider_arn, null)
-  ) : (
+    ) : (
     local.kubernetes_cluster_name != null ?
     try("arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(data.aws_eks_cluster.external[0].identity[0].oidc[0].issuer, "https://", "")}", null) :
     null
@@ -186,6 +186,7 @@ locals {
   pricing_views_bundles                = (can(regex("^[a-z0-9-]{1,37}$", "${local.environment}-pricing-views-bundles")) ? lower("${local.environment}-pricing-views-bundles") : tobool("Pricing views bundles bucket name must be lowercase and less than or equal to 37 characters in length"))
   tenants_assets                       = (can(regex("^[a-z0-9-]{1,37}$", "${local.environment}-tenants-assets")) ? lower("${local.environment}-tenants-assets") : tobool("Tenants assets bucket name must be lowercase and less than or equal to 37 characters in length"))
   s3_policy                            = (can(regex("^[a-z0-9-]{1,37}$", "${local.environment}-policy")) ? lower("${local.environment}-policy") : tobool("S3 policy bucket name must be lowercase and less than or equal to 37 characters in length"))
+  s3_force_destroy_buckets             = try(local.config.settings.s3.force_destroy_buckets, false)
 }
 
 data "aws_caller_identity" "current" {}
