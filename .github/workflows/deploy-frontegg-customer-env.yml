@@ -57,6 +57,7 @@ jobs:
           echo "msk_output<<EOF" >> $GITHUB_OUTPUT
           echo "$(terraform output -json msk_output)" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+          echo $GITHUB_OUTPUT
 
       - name: Grant EKS Admin Access to SSO Role
         run: |
@@ -73,12 +74,12 @@ jobs:
         run: helm repo add frontegg https://frontegg.github.io/helm-charts && helm repo update
 
       - name: Deploy Frontegg Core Services (MSK Enabled)
-        if: fromJson(steps.tf_outputs.outputs.msk_output) != null
+        if: steps.tf_outputs.outputs.msk_output != 'null'
         run: |
           helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set global.envId=prod-frontegg-private-deployment-main-secret --set "debezium.bootstrapServers=${{ fromJson(steps.tf_outputs.outputs.msk_output).bootstrap_brokers_plaintext }}"
 
       - name: Deploy Frontegg Core Services (MSK Disabled)
-        if: fromJson(steps.tf_outputs.outputs.msk_output) == null
+        if: steps.tf_outputs.outputs.msk_output == 'null'
         run: |
           helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set global.envId=prod-frontegg-private-deployment-main-secret --set debezium.enabled=false
 
