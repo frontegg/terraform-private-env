@@ -75,7 +75,7 @@ jobs:
       - name: Deploy Frontegg Core Services (MSK Enabled)
         if: fromJson(steps.tf_outputs.outputs.msk_output) != null
         run: |
-          helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set global.envId=prod-frontegg-private-deployment-main-secret --set debezium.bootstrapServers='${{ fromJson(steps.tf_outputs.outputs.msk_output).bootstrap_brokers_plaintext }}'
+          helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set global.envId=prod-frontegg-private-deployment-main-secret --set "debezium.bootstrapServers=${{ fromJson(steps.tf_outputs.outputs.msk_output).bootstrap_brokers_plaintext }}"
 
       - name: Deploy Frontegg Core Services (MSK Disabled)
         if: fromJson(steps.tf_outputs.outputs.msk_output) == null
