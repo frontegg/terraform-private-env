@@ -49,7 +49,7 @@ jobs:
           aws eks associate-access-policy \
             --cluster-name private-env-prod-eks \
             --principal-arn "arn:aws:iam::109940070146:role/aws-reserved/sso.amazonaws.com/eu-north-1/AWSReservedSSO_AdministratorAccess_a105bdd30189cd8e" \
-            --policy-arn arn:aws:eks::aws:policy/AmazonEKSAdminPolicy \
+            --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy \
             --access-scope type=cluster
 
       - name: Set up Helm
