@@ -52,12 +52,15 @@ jobs:
       - name: Set Terraform Outputs
         id: tf_outputs
         run: |
-          json_output=$(terraform output -json msk_output)
-          echo "Raw MSK output: $json_output"
+          terraform output -json msk_output > /tmp/msk_output.json
+          echo "Raw MSK output from file:"
+          cat /tmp/msk_output.json
+          
           brokers=""
-          if [[ "$json_output" != "null" ]]; then
-            brokers=$(echo "$json_output" | jq -r .bootstrap_brokers_plaintext)
+          if [[ -s /tmp/msk_output.json ]] && [[ $(cat /tmp/msk_output.json) != "null" ]]; then
+            brokers=$(jq -r .bootstrap_brokers_plaintext /tmp/msk_output.json)
           fi
+          
           echo "Extracted brokers: $brokers"
           echo "msk_bootstrap_brokers=$brokers" >> $GITHUB_OUTPUT
 
