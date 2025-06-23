@@ -42,10 +42,19 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan
+        run: terraform plan -no-color -detailed-exitcode
+        continue-on-error: true
 
       - name: Terraform Apply
+        if: steps.plan.exitcode == 2
         run: terraform apply -auto-approve
+
+      - name: Set Terraform Outputs
+        id: tf_outputs
+        run: |
+          echo "msk_output<<EOF" >> $GITHUB_OUTPUT
+          echo "$(terraform output -json msk_output)" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Grant EKS Admin Access to SSO Role
         run: |
@@ -63,11 +72,7 @@ jobs:
 
       - name: Deploy Frontegg Core Services
         run: |
-          helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set global.envId=prod-frontegg-private-deployment-main-secret
+          helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set global.envId=prod-frontegg-private-deployment-main-secret --set debezium.bootstrapServers=${{ fromJson(steps.tf_outputs.outputs.msk_output).bootstrap_brokers_plaintext }}
 
       - name: Deploy Frontegg Dashboard
-        run: helm upgrade --install frontegg-dashboard frontegg/frontegg-dashboard --namespace frontegg --devel
-
-      - name: Deploy Frontegg SaaS
-        run: |
-          helm upgrade --install frontegg-saas frontegg/frontegg-saas --namespace frontegg --create-namespace --devel --set global.envId=prod-frontegg-private-deployment-main-secret 
+        run: helm upgrade --install frontegg-dashboard frontegg/frontegg-dashboard --namespace frontegg --devel --set global.envId=prod-frontegg-private-deployment-main-secret
