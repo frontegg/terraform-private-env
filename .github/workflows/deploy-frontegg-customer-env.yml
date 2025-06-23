@@ -42,7 +42,15 @@ jobs:
         run: terraform plan
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve tfplan
+
+      - name: Grant EKS Admin Access to SSO Role
+        run: |
+          aws eks associate-access-policy \
+            --cluster-name private-env-prod-eks \
+            --principal-arn "arn:aws:iam::109940070146:role/aws-reserved/sso.amazonaws.com/eu-north-1/AWSReservedSSO_AdministratorAccess_a105bdd30189cd8e" \
+            --policy-arn arn:aws:eks::aws:policy/AmazonEKSAdminPolicy \
+            --access-scope type=cluster
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
@@ -50,12 +58,8 @@ jobs:
       - name: Add Frontegg Helm repo
         run: helm repo add frontegg https://frontegg.github.io/helm-charts && helm repo update
 
-      - name: Helm Dependency Update
-        run: helm dependency update
-        working-directory: ./helm/external-secrets-objects
-
       - name: Deploy Frontegg Core Services
-        run: helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace
+        run: helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel
 
       - name: Deploy Frontegg Dashboard
-        run: helm upgrade --install frontegg-dashboard frontegg/frontegg-dashboard --namespace frontegg 
+        run: helm upgrade --install frontegg-dashboard frontegg/frontegg-dashboard --namespace frontegg --devel 
