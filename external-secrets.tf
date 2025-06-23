@@ -19,6 +19,8 @@ resource "helm_release" "external_secrets" {
     })
   ]
 
+  depends_on = [module.eks]
+
   lifecycle {
     ignore_changes = [
       values,

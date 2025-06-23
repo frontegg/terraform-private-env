@@ -256,46 +256,45 @@ module "ebs_csi_irsa_role" {
 # Create the gp3 StorageClass
 resource "kubernetes_storage_class" "gp3" {
   provider = kubernetes.eks
-  count    = local.config.settings.eks.config.enabled ? 1 : 0
+  count    = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0
 
   metadata {
     name = "gp3"
+  }
+
+  storage_provisioner = "ebs.csi.aws.com"
+  reclaim_policy      = "Delete"
+  volume_binding_mode = "WaitForFirstConsumer"
+  parameters = {
+    type = "gp3"
+    fsType = "ext4"
+  }
+
+  depends_on = [module.eks]
+}
+
+resource "kubernetes_storage_class" "gp3-high-performance" {
+  provider = kubernetes.eks
+  count    = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0
+
+  metadata {
+    name = "gp3-high-performance"
     annotations = {
       "storageclass.kubernetes.io/is-default-class" = "true"
     }
   }
 
-  storage_provisioner    = "ebs.csi.aws.com"
-  reclaim_policy         = "Delete"
-  volume_binding_mode    = "WaitForFirstConsumer"
-  allow_volume_expansion = true
-
-  lifecycle {
-    ignore_changes = all
-  }
-}
-
-resource "kubernetes_storage_class" "gp3-high-performance" {
-  provider = kubernetes.eks
-  count    = local.config.settings.eks.config.enabled ? 1 : 0
-
-  metadata {
-    name = "gp3-high-performance"
-  }
-
   storage_provisioner = "ebs.csi.aws.com"
   reclaim_policy      = "Delete"
+  volume_binding_mode = "WaitForFirstConsumer"
   parameters = {
     type       = "gp3"
-    iopsPerGB  = "3000"
-    throughput = "150"
+    fsType     = "ext4"
+    iops       = "16000"
+    throughput = "1000"
   }
-  volume_binding_mode    = "WaitForFirstConsumer"
-  allow_volume_expansion = true
 
-  lifecycle {
-    ignore_changes = all
-  }
+  depends_on = [module.eks]
 }
 
 
