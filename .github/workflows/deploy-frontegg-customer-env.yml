@@ -12,6 +12,26 @@ jobs:
     runs-on: ubuntu-latest
     name: Terraform Apply
     if: contains(fromJSON('["eyaltam1971"]'), github.actor)
+    env:
+      AWS_REGION: us-east-1
+      AWS_ASSUME_ROLE_ARN: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
+      EKS_CLUSTER_NAME: private-env-prod-eks
+      EKS_ADMIN_PRINCIPAL_ARN: arn:aws:iam::109940070146:role/aws-reserved/sso.amazonaws.com/eu-north-1/AWSReservedSSO_AdministratorAccess_a105bdd30189cd8e
+      EKS_ADMIN_POLICY_ARN: arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy
+      TF_STATE_BUCKET: frontegg-tfstate-109940070146-us-east-1
+      TF_STATE_KEY: tf-state/frontegg/private-env/terraform.tfstate
+      TF_STATE_LOCK_TABLE: frontegg-terraform-state-lock
+      GLOBAL_ENV_ID: prod-frontegg-private-deployment-main-secret
+      SETUP_JOB_EMAIL: devops@frontegg.com
+      SETUP_JOB_PASSWORD: '123456'
+      SETUP_JOB_SENDER_EMAIL: devops+onprem@frontegg.com
+      API_GATEWAY_URL: https://api.frontegg.com
+      VENDOR_HOST: frontegg.com
+      OPA_POLICY_BUCKET: frontegg-prod-opa-policy
+      PORTAL_URL: https://portal.frontegg.com
+      CORS_ORIGIN: https://app.frontegg.com
+      API_GATEWAY_IGNORED_HOSTS: localhost
+      VENDORS_SERVICE_VENDORS_DOMAIN: frontegg.com
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,11 +39,11 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
-          aws-region: us-east-1
+          role-to-assume: ${{ env.AWS_ASSUME_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Kubeconfig
-        run: aws eks update-kubeconfig --name private-env-prod-eks --region us-east-1
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -34,10 +54,10 @@ jobs:
         id: init
         run: |
           terraform init \
-            -backend-config="bucket=frontegg-tfstate-109940070146-us-east-1" \
-            -backend-config="key=tf-state/frontegg/private-env/terraform.tfstate" \
-            -backend-config="region=us-east-1" \
-            -backend-config="dynamodb_table=frontegg-terraform-state-lock" \
+            -backend-config="bucket=${{ env.TF_STATE_BUCKET }}" \
+            -backend-config="key=${{ env.TF_STATE_KEY }}" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ env.TF_STATE_LOCK_TABLE }}" \
             -backend-config="encrypt=true"
 
       - name: Terraform Plan
@@ -64,18 +84,21 @@ jobs:
           
           brokers=""
           if [[ -s /tmp/msk_output_clean.json ]] && [[ $(cat /tmp/msk_output_clean.json) != "null" ]]; then
-            brokers=$(jq -r .bootstrap_brokers_plaintext /tmp/msk_output_clean.json)
+            brokers_raw=$(jq -r .bootstrap_brokers_plaintext /tmp/msk_output_clean.json)
+            echo "Extracted brokers (raw): $brokers_raw"
+            # Escape commas for Helm --set command
+            brokers=$(echo "$brokers_raw" | sed 's/,/\\,/g')
           fi
           
-          echo "Extracted brokers: $brokers"
+          echo "Extracted brokers (escaped for Helm): $brokers"
           echo "msk_bootstrap_brokers=$brokers" >> $GITHUB_OUTPUT
 
       - name: Grant EKS Admin Access to SSO Role
         run: |
           aws eks associate-access-policy \
-            --cluster-name private-env-prod-eks \
-            --principal-arn "arn:aws:iam::109940070146:role/aws-reserved/sso.amazonaws.com/eu-north-1/AWSReservedSSO_AdministratorAccess_a105bdd30189cd8e" \
-            --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy \
+            --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
+            --principal-arn "${{ env.EKS_ADMIN_PRINCIPAL_ARN }}" \
+            --policy-arn ${{ env.EKS_ADMIN_POLICY_ARN }} \
             --access-scope type=cluster
 
       - name: Set up Helm
@@ -87,12 +110,48 @@ jobs:
       - name: Deploy Frontegg Core Services (MSK Enabled)
         if: steps.tf_outputs.outputs.msk_bootstrap_brokers != ''
         run: |
-          helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set global.envId=prod-frontegg-private-deployment-main-secret --set "debezium.bootstrapServers=${{ steps.tf_outputs.outputs.msk_bootstrap_brokers }}"
+          helm upgrade --install frontegg-core-services frontegg/frontegg-core-services \
+            --namespace frontegg \
+            --create-namespace \
+            --devel \
+            --set global.envId=${{ env.GLOBAL_ENV_ID }} \
+            --set "debezium.bootstrapServers=${{ steps.tf_outputs.outputs.msk_bootstrap_brokers }}" \
+            --set environmentSetupJob.email=${{ env.SETUP_JOB_EMAIL }} \
+            --set environmentSetupJob.password=${{ env.SETUP_JOB_PASSWORD }} \
+            --set environmentSetupJob.senderEmail=${{ env.SETUP_JOB_SENDER_EMAIL }} \
+            --set configCenter.frontegg.services.apiGatewayUrl=${{ env.API_GATEWAY_URL }} \
+            --set configCenter.frontegg.services.fronteggVendorHost=${{ env.VENDOR_HOST }} \
+            --set configCenter.externalServices.aws.region=${{ env.AWS_REGION }} \
+            --set configCenter.frontegg.applications.entitlements.opaPolicyBucket=${{ env.OPA_POLICY_BUCKET }} \
+            --set configCenter.frontegg.general.portalUrl=${{ env.PORTAL_URL }} \
+            --set configCenter.frontegg.general.corsOrigin=${{ env.CORS_ORIGIN }} \
+            --set configCenter.applications.apiGateway.apiGatewayIgnoredHosts=${{ env.API_GATEWAY_IGNORED_HOSTS }} \
+            --set configCenter.applications.vendors.vendorsServiceVendorsDomain=${{ env.VENDORS_SERVICE_VENDORS_DOMAIN }}
 
       - name: Deploy Frontegg Core Services (MSK Disabled)
         if: steps.tf_outputs.outputs.msk_bootstrap_brokers == ''
         run: |
-          helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set global.envId=prod-frontegg-private-deployment-main-secret --set debezium.enabled=false
+          helm upgrade --install frontegg-core-services frontegg/frontegg-core-services \
+            --namespace frontegg \
+            --create-namespace \
+            --devel \
+            --set global.envId=${{ env.GLOBAL_ENV_ID }} \
+            --set debezium.enabled=false \
+            --set environmentSetupJob.email=${{ env.SETUP_JOB_EMAIL }} \
+            --set environmentSetupJob.password=${{ env.SETUP_JOB_PASSWORD }} \
+            --set environmentSetupJob.senderEmail=${{ env.SETUP_JOB_SENDER_EMAIL }} \
+            --set configCenter.frontegg.services.apiGatewayUrl=${{ env.API_GATEWAY_URL }} \
+            --set configCenter.frontegg.services.fronteggVendorHost=${{ env.VENDOR_HOST }} \
+            --set configCenter.externalServices.aws.region=${{ env.AWS_REGION }} \
+            --set configCenter.frontegg.applications.entitlements.opaPolicyBucket=${{ env.OPA_POLICY_BUCKET }} \
+            --set configCenter.frontegg.general.portalUrl=${{ env.PORTAL_URL }} \
+            --set configCenter.frontegg.general.corsOrigin=${{ env.CORS_ORIGIN }} \
+            --set configCenter.applications.apiGateway.apiGatewayIgnoredHosts=${{ env.API_GATEWAY_IGNORED_HOSTS }} \
+            --set configCenter.applications.vendors.vendorsServiceVendorsDomain=${{ env.VENDORS_SERVICE_VENDORS_DOMAIN }}
 
       - name: Deploy Frontegg Dashboard
-        run: helm upgrade --install frontegg-dashboard frontegg/frontegg-dashboard --namespace frontegg --devel --set global.envId=prod-frontegg-private-deployment-main-secret
+        run: |
+          helm upgrade --install frontegg-dashboard frontegg/frontegg-dashboard \
+            --namespace frontegg \
+            --devel \
+            --set global.envId=${{ env.GLOBAL_ENV_ID }}
