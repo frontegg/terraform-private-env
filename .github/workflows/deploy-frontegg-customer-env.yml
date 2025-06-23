@@ -56,9 +56,15 @@ jobs:
           echo "Raw MSK output from file:"
           cat /tmp/msk_output.json
           
+          # Clean the file to only include the JSON object
+          grep '^{' /tmp/msk_output.json > /tmp/msk_output_clean.json
+          
+          echo "Cleaned MSK output:"
+          cat /tmp/msk_output_clean.json
+          
           brokers=""
-          if [[ -s /tmp/msk_output.json ]] && [[ $(cat /tmp/msk_output.json) != "null" ]]; then
-            brokers=$(jq -r .bootstrap_brokers_plaintext /tmp/msk_output.json)
+          if [[ -s /tmp/msk_output_clean.json ]] && [[ $(cat /tmp/msk_output_clean.json) != "null" ]]; then
+            brokers=$(jq -r .bootstrap_brokers_plaintext /tmp/msk_output_clean.json)
           fi
           
           echo "Extracted brokers: $brokers"
