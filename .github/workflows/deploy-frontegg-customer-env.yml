@@ -109,7 +109,7 @@ jobs:
 
       - name: Pull and Patch Frontegg Core Services Chart
         run: |
-          helm pull frontegg/frontegg-core-services --untar --dest . --devel
+          helm pull frontegg/frontegg-core-services --untar --destination . --devel
           sed -i 's/| tpl .region //g' ./frontegg-core-services/templates/config-center.yaml
 
       - name: Deploy Frontegg Core Services (MSK Enabled)
