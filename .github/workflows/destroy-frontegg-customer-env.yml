@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.inputs.confirm == 'destroy' && contains(fromJSON('["eyaltam1971"]'), github.actor)
     name: Terraform Destroy
+    env:
+      EKS_CLUSTER_NAME: private-env-prod-eks
+      AWS_REGION: us-east-1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,7 +28,10 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
-          aws-region: us-east-1
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Kubeconfig
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
