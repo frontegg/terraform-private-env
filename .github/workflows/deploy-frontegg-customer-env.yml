@@ -62,7 +62,7 @@ jobs:
         run: helm repo add frontegg https://frontegg.github.io/helm-charts && helm repo update
 
       - name: Deploy Frontegg Core Services
-        run: helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set envID=prod-frontegg-private-deployment-main-secret
+        run: helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set global.envID=prod-frontegg-private-deployment-main-secret
 
       - name: Deploy Frontegg Dashboard
         run: helm upgrade --install frontegg-dashboard frontegg/frontegg-dashboard --namespace frontegg --devel 
