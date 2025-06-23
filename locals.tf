@@ -101,8 +101,10 @@ locals {
   msk_allow_unauthenticated = try(local.config.settings.msk.config.authentication.unauthenticated, false) # Default to false if not set
   msk_sasl_iam_enabled      = try(local.config.settings.msk.config.authentication.sasl.iam, false)        # Default to false
   msk_sasl_scram_enabled    = try(local.config.settings.msk.config.authentication.sasl.scram, true)       # Default to true
-  kafka_username            = local.config.settings.msk.config.enabled ? "kafkamaster_${random_string.kafka_random_letters[0].result}" : local.config.settings.msk.config.username
-  kafka_password            = local.config.settings.msk.config.enabled ? random_password.kafka_password[0].result : local.config.settings.msk.config.password
+
+  kafka_username = local.config.settings.msk.config.enabled && (local.msk_sasl_iam_enabled || local.msk_sasl_scram_enabled) ? "kafkamaster_${random_string.kafka_random_letters[0].result}" : ""
+  kafka_password = local.config.settings.msk.config.enabled && (local.msk_sasl_iam_enabled || local.msk_sasl_scram_enabled) ? random_password.kafka_password[0].result : ""
+  
   kafka_broker_list = local.config.settings.msk.config.enabled ? module.msk_kafka_cluster[0].bootstrap_brokers : (
     length(trimspace(local.config.settings.msk.config.msk_bootstrap_brokers_plaintext)) > 0 ? split(",", local.config.settings.msk.config.msk_bootstrap_brokers_plaintext) :
     length(trimspace(local.config.settings.msk.config.msk_bootstrap_brokers_sasl_iam)) > 0 ? split(",", local.config.settings.msk.config.msk_bootstrap_brokers_sasl_iam) :

@@ -1,0 +1,18 @@
+mongodb:
+  image:
+    registry: 527305576865.dkr.ecr.us-east-1.amazonaws.com/docker-hub
+    repository: frontegg/mongodb
+    tag: 6.0.6-debian-11-r3
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  auth:
+    enabled: false
+    ## @param auth.enabled Enable authentication
+    ## ref: https://docs.mongodb.com/manual/tutorial/enable-authentication/
+    ##
+    

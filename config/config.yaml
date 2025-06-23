@@ -96,9 +96,9 @@ settings:
       tls: true
   mongo:
     config:
-      endpoint: "mongodb://mongo-mongodb"
-      username: "fff"
-      password: "fff"
+      endpoint: "mongodb://mongodb"
+      username: "placeholder"
+      password: "placeholder"
   eks:
     config:
       enabled: true
@@ -109,7 +109,7 @@ settings:
         endpoint_public_access_cidrs:
           - "0.0.0.0/0"
       managed_node_groups:
-        capacity_type: "ON_DEMAND"
+        capacity_type: "SPOT"
         instance_types:
           - m5.large
           - m5.xlarge
@@ -118,8 +118,8 @@ settings:
           - m5d.large
           - m6i.large
         min_size: 2
-        max_size: 5
-        desired_size: 3
+        max_size: 20
+        desired_size: 20
       managed_node_groups_defaults:
         instance_types:
           - m6i.large
