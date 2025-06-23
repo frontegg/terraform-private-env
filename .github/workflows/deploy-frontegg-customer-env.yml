@@ -52,12 +52,14 @@ jobs:
       - name: Set Terraform Outputs
         id: tf_outputs
         run: |
-          echo "MSK Output from terraform:"
-          echo "$(terraform output -json msk_output)"
-          echo "msk_output<<EOF" >> $GITHUB_OUTPUT
-          echo "$(terraform output -json msk_output)" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo $GITHUB_OUTPUT
+          json_output=$(terraform output -json msk_output)
+          echo "Raw MSK output: $json_output"
+          brokers=""
+          if [[ "$json_output" != "null" ]]; then
+            brokers=$(echo "$json_output" | jq -r .bootstrap_brokers_plaintext)
+          fi
+          echo "Extracted brokers: $brokers"
+          echo "msk_bootstrap_brokers=$brokers" >> $GITHUB_OUTPUT
 
       - name: Grant EKS Admin Access to SSO Role
         run: |
@@ -74,12 +76,12 @@ jobs:
         run: helm repo add frontegg https://frontegg.github.io/helm-charts && helm repo update
 
       - name: Deploy Frontegg Core Services (MSK Enabled)
-        if: steps.tf_outputs.outputs.msk_output != 'null'
+        if: steps.tf_outputs.outputs.msk_bootstrap_brokers != ''
         run: |
-          helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set global.envId=prod-frontegg-private-deployment-main-secret --set "debezium.bootstrapServers=${{ fromJson(steps.tf_outputs.outputs.msk_output).bootstrap_brokers_plaintext }}"
+          helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set global.envId=prod-frontegg-private-deployment-main-secret --set "debezium.bootstrapServers=${{ steps.tf_outputs.outputs.msk_bootstrap_brokers }}"
 
       - name: Deploy Frontegg Core Services (MSK Disabled)
-        if: steps.tf_outputs.outputs.msk_output == 'null'
+        if: steps.tf_outputs.outputs.msk_bootstrap_brokers == ''
         run: |
           helm upgrade --install frontegg-core-services frontegg/frontegg-core-services --namespace frontegg --create-namespace --devel --set global.envId=prod-frontegg-private-deployment-main-secret --set debezium.enabled=false
 
