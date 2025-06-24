@@ -61,25 +61,24 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
-      - name: Extract OPA S3 Bucket Name
-        id: opa_bucket
-        run: |
-          BUCKET_NAME=$(terraform output -raw opa_s3_bucket_name | head -n 1)
-          echo "opa_s3_bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
-
-      - name: Set Terraform Outputs
+      - name: Extract Terraform Outputs
         id: tf_outputs
         run: |
+          # Extract OPA S3 Bucket Name
+          OPA_BUCKET=$(terraform output -raw opa_s3_bucket_name | head -n 1)
+          echo "opa_s3_bucket_name=$OPA_BUCKET" >> $GITHUB_OUTPUT
+
+          # Extract MSK Output (as JSON)
           terraform output -json msk_output > /tmp/msk_output.json
           echo "Raw MSK output from file:"
           cat /tmp/msk_output.json
-          
+
           # Clean the file to only include the JSON object
           grep '^{' /tmp/msk_output.json > /tmp/msk_output_clean.json
-          
+
           echo "Cleaned MSK output:"
           cat /tmp/msk_output_clean.json
-          
+
           brokers=""
           if [[ -s /tmp/msk_output_clean.json ]] && [[ $(cat /tmp/msk_output_clean.json) != "null" ]]; then
             brokers_raw=$(jq -r .bootstrap_brokers_plaintext /tmp/msk_output_clean.json)
@@ -87,7 +86,7 @@ jobs:
             # Escape commas for Helm --set command
             brokers=$(echo "$brokers_raw" | sed 's/,/\\,/g')
           fi
-          
+
           echo "Extracted brokers (escaped for Helm): $brokers"
           echo "msk_bootstrap_brokers=$brokers" >> $GITHUB_OUTPUT
 
@@ -160,7 +159,7 @@ jobs:
             --set configCenter.frontegg.services.apiGatewayUrl=${{ env.API_GATEWAY_URL }} \
             --set configCenter.frontegg.services.fronteggVendorHost=${{ env.VENDOR_HOST }} \
             --set configCenter.externalServices.aws.region=${{ env.AWS_REGION }} \
-            --set configCenter.frontegg.applications.entitlements.opaPolicyBucket=${{ steps.opa_bucket.outputs.opa_s3_bucket_name }} \
+            --set configCenter.frontegg.applications.entitlements.opaPolicyBucket=${{ steps.tf_outputs.outputs.opa_s3_bucket_name }} \
             --set configCenter.frontegg.general.portalUrl=${{ env.PORTAL_URL }} \
             --set configCenter.frontegg.general.corsOrigin=${{ env.CORS_ORIGIN }} \
             --set configCenter.frontegg.applications.apiGateway.apiGatewayIgnoredHosts=${{ env.API_GATEWAY_IGNORED_HOSTS }} \
