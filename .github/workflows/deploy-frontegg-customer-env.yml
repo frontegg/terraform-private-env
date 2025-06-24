@@ -102,7 +102,7 @@ jobs:
           aws eks create-access-entry \
             --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
             --principal-arn "${{ env.CROSS_ACCOUNT_ADMIN_ASSUME_ROLE_ARN }}" \
-            --region ${{ env.AWS_REGION }}
+            --region ${{ env.AWS_REGION }} || true
 
       - name: Grant EKS Admin Access to SSO Role
         run: |
@@ -118,7 +118,7 @@ jobs:
             --principal-arn "${{ env.CROSS_ACCOUNT_ADMIN_ASSUME_ROLE_ARN }}" \
             --access-scope type=cluster \
             --policy-arn ${{ env.EKS_ADMIN_POLICY_ARN }} \
-            --region ${{ env.AWS_REGION }}
+            --region ${{ env.AWS_REGION }} || true
       
 
       - name: Set up Helm
