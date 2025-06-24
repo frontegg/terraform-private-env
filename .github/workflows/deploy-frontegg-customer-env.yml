@@ -134,6 +134,9 @@ jobs:
             --create-namespace \
             --values ./helm/mongodb6/values.yaml
 
+      - name: Add Frontegg Helm Repository
+        run: helm repo add frontegg https://frontegg.github.io/charts && helm repo update
+
       - name: Pull and Patch Frontegg Core Services Chart
         run: |
           helm pull frontegg/frontegg-core-services --untar --destination . --devel
