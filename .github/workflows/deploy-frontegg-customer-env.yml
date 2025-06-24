@@ -58,13 +58,7 @@ jobs:
             -backend-config="dynamodb_table=${{ env.TF_STATE_LOCK_TABLE }}" \
             -backend-config="encrypt=true"
 
-      - name: Terraform Plan
-        id: plan
-        run: terraform plan -no-color -detailed-exitcode
-        continue-on-error: true
-
       - name: Terraform Apply
-        if: steps.plan.exitcode == 2
         run: terraform apply -auto-approve
 
       - name: Setup Kubeconfig
