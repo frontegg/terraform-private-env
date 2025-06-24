@@ -31,7 +31,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Kubeconfig
-        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} || true
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
