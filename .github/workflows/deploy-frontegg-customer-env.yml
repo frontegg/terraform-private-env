@@ -65,7 +65,7 @@ jobs:
         id: tf_outputs
         run: |
           # Extract OPA S3 Bucket Name
-          OPA_BUCKET=$(terraform output -json opa_s3_bucket_name | jq -r .)
+          OPA_BUCKET=$(terraform output opa_s3_bucket_name | head -n 1)
           echo "opa_s3_bucket_name=$OPA_BUCKET" > tf_output.txt
 
           # Extract MSK Output (as JSON)
