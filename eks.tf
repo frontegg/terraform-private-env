@@ -66,6 +66,7 @@ module "eks" {
       secret_manager = aws_iam_policy.secret_manager[0].arn
       load_balancing = aws_iam_policy.load_balancing[0].arn
       route53        = aws_iam_policy.route53[0].arn
+      opa_s3_access  = aws_iam_policy.opa_s3_access[0].arn
       ssm            = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
       s3readonly     = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
     }
@@ -295,6 +296,36 @@ resource "kubernetes_storage_class" "gp3-high-performance" {
   }
 
   depends_on = [module.eks]
+}
+
+# IAM policy for OPA S3 bucket access
+resource "aws_iam_policy" "opa_s3_access" {
+  count  = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0
+  name   = "${local.environment}-opa-s3-access"
+  policy = data.aws_iam_policy_document.opa_s3_access[0].json
+}
+
+data "aws_iam_policy_document" "opa_s3_access" {
+  count = local.config.settings.eks.config.enabled && !try(local.config.settings.eks.config.auto_mode.enabled, false) ? 1 : 0
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion",
+      "s3:ListBucket",
+      "s3:ListBucketVersions",
+      "s3:GetBucketLocation",
+      "s3:GetBucketVersioning"
+    ]
+    resources = [
+      module.opa-s3-bucket.s3_bucket_arn,
+      "${module.opa-s3-bucket.s3_bucket_arn}/*"
+    ]
+  }
 }
 
 
