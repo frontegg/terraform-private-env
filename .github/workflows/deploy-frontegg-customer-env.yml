@@ -66,7 +66,7 @@ jobs:
         run: |
           # Extract OPA S3 Bucket Name
           OPA_BUCKET=$(terraform output -raw opa_s3_bucket_name | head -n 1)
-          echo "opa_s3_bucket_name=$OPA_BUCKET" >> $GITHUB_OUTPUT
+          echo "opa_s3_bucket_name=$OPA_BUCKET" > tf_output.txt
 
           # Extract MSK Output (as JSON)
           terraform output -json msk_output > /tmp/msk_output.json
@@ -88,7 +88,10 @@ jobs:
           fi
 
           echo "Extracted brokers (escaped for Helm): $brokers"
-          echo "msk_bootstrap_brokers=$brokers" >> $GITHUB_OUTPUT
+          echo "msk_bootstrap_brokers=$brokers" >> tf_output.txt
+
+          # Only now append to $GITHUB_OUTPUT
+          cat tf_output.txt >> $GITHUB_OUTPUT
 
       - name: Setup Kubeconfig
         run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
