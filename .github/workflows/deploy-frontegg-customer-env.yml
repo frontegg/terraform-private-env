@@ -69,8 +69,8 @@ jobs:
           terraform output opa_s3_bucket_name || echo "terraform output failed"
           echo "Raw output complete"
           
-          # Extract OPA bucket name directly from terraform output
-          OPA_BUCKET=$(terraform output opa_s3_bucket_name | tr -d '"' | tr -d '\n')
+          # Extract OPA bucket name and filter out debug information
+          OPA_BUCKET=$(terraform output opa_s3_bucket_name | grep -E '^[a-zA-Z0-9-]+$' | head -n 1 | tr -d '"' | tr -d '\n')
           echo "Extracted OPA_BUCKET: '$OPA_BUCKET'"
           echo "opa_s3_bucket_name=$OPA_BUCKET" > tf_output.txt
 
