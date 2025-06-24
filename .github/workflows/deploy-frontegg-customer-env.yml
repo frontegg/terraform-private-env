@@ -43,9 +43,6 @@ jobs:
           role-to-assume: ${{ env.AWS_ASSUME_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Setup Kubeconfig
-        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -69,6 +66,9 @@ jobs:
       - name: Terraform Apply
         if: steps.plan.exitcode == 2
         run: terraform apply -auto-approve
+
+      - name: Setup Kubeconfig
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
 
       - name: Set Terraform Outputs
         id: tf_outputs
