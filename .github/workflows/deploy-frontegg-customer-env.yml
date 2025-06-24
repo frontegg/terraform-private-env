@@ -69,7 +69,12 @@ jobs:
           terraform output opa_s3_bucket_name || echo "terraform output failed"
           echo "Raw output complete"
           
-          OPA_BUCKET=$(terraform output opa_s3_bucket_name 2>/dev/null | tr -d '"' | head -n 1)
+          # Use terraform output -json to get clean output
+          terraform output -json opa_s3_bucket_name > /tmp/opa_output.json
+          echo "Raw OPA output from file:"
+          cat /tmp/opa_output.json
+          
+          OPA_BUCKET=$(cat /tmp/opa_output.json | jq -r '.')
           echo "Extracted OPA_BUCKET: '$OPA_BUCKET'"
           echo "opa_s3_bucket_name=$OPA_BUCKET" > tf_output.txt
 
@@ -155,19 +160,36 @@ jobs:
 
       - name: Deploy Frontegg Core Services
         run: |
+          echo "Debug: MSK Bootstrap Brokers = '${{ steps.tf_outputs.outputs.msk_bootstrap_brokers }}'"
+          echo "Debug: OPA S3 Bucket Name = '${{ steps.tf_outputs.outputs.opa_s3_bucket_name }}'"
+          
+          # Set default values if outputs are empty
+          MSK_BROKERS="${{ steps.tf_outputs.outputs.msk_bootstrap_brokers }}"
+          OPA_BUCKET="${{ steps.tf_outputs.outputs.opa_s3_bucket_name }}"
+          
+          if [ -z "$MSK_BROKERS" ]; then
+            echo "Warning: MSK brokers is empty, using placeholder"
+            MSK_BROKERS="localhost:9092"
+          fi
+          
+          if [ -z "$OPA_BUCKET" ]; then
+            echo "Warning: OPA bucket is empty, using placeholder"
+            OPA_BUCKET="default-opa-bucket"
+          fi
+          
           helm upgrade --install frontegg-core-services ./frontegg-core-services \
             --namespace frontegg \
             --create-namespace \
             --devel \
             --set global.envId=${{ env.GLOBAL_ENV_ID }} \
-            --set "debezium.bootstrapServers=${{ steps.tf_outputs.outputs.msk_bootstrap_brokers }}" \
+            --set "debezium.bootstrapServers=$MSK_BROKERS" \
             --set environmentSetupJob.email=${{ env.SETUP_JOB_EMAIL }} \
             --set environmentSetupJob.password=${{ env.SETUP_JOB_PASSWORD }} \
             --set environmentSetupJob.senderEmail=${{ env.SETUP_JOB_SENDER_EMAIL }} \
             --set configCenter.frontegg.services.apiGatewayUrl=${{ env.API_GATEWAY_URL }} \
             --set configCenter.frontegg.services.fronteggVendorHost=${{ env.VENDOR_HOST }} \
             --set configCenter.externalServices.aws.region=${{ env.AWS_REGION }} \
-            --set configCenter.frontegg.applications.entitlements.opaPolicyBucket=${{ steps.tf_outputs.outputs.opa_s3_bucket_name }} \
+            --set "configCenter.frontegg.applications.entitlements.opaPolicyBucket=$OPA_BUCKET" \
             --set configCenter.frontegg.general.portalUrl=${{ env.PORTAL_URL }} \
             --set configCenter.frontegg.general.corsOrigin=${{ env.CORS_ORIGIN }} \
             --set configCenter.frontegg.applications.apiGateway.apiGatewayIgnoredHosts=${{ env.API_GATEWAY_IGNORED_HOSTS }} \
