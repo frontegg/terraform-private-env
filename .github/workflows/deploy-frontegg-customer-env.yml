@@ -16,7 +16,8 @@ jobs:
       AWS_REGION: us-east-1
       AWS_ASSUME_ROLE_ARN: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
       EKS_CLUSTER_NAME: private-env-prod-eks
-      EKS_ADMIN_PRINCIPAL_ARN: arn:aws:iam::109940070146:role/AWSReservedSSO_AdministratorAccess_a105bdd30189cd8e
+      CROSS_ACCOUNT_ADMIN_ASSUME_ROLE_ARN: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
+      SSO_ADMIN_PRINCIPAL_ARN: arn:aws:iam::109940070146:role/aws-reserved/sso.amazonaws.com/eu-north-1/AWSReservedSSO_AdministratorAccess_a105bdd30189cd8e
       EKS_ADMIN_POLICY_ARN: arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy
       TF_STATE_BUCKET: frontegg-tfstate-109940070146-us-east-1
       TF_STATE_KEY: tf-state/frontegg/private-env/terraform.tfstate
@@ -25,14 +26,14 @@ jobs:
       SETUP_JOB_EMAIL: devops@frontegg.com
       SETUP_JOB_PASSWORD: '123456'
       SETUP_JOB_SENDER_EMAIL: devops+onprem@frontegg.com
-      API_GATEWAY_URL: https://api.frontegg.com
-      VENDOR_HOST: frontegg.com
+      API_GATEWAY_URL: https://api.backegg.io
+      VENDOR_HOST: backegg.io
       OPA_POLICY_BUCKET: frontegg-prod-opa-policy
-      PORTAL_URL: https://portal.frontegg.com
-      CORS_ORIGIN: https://app.frontegg.com
+      PORTAL_URL: https://portal.backegg.io
+      CORS_ORIGIN: https://app.backegg.io
       API_GATEWAY_IGNORED_HOSTS: localhost
-      VENDORS_SERVICE_VENDORS_DOMAIN: frontegg.com
-      CROSS_ACCOUNT_ADMIN_ASSUME_ROLE_ARN: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
+      VENDORS_SERVICE_VENDORS_DOMAIN: backegg.io
+      
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -61,9 +62,6 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
-      - name: Setup Kubeconfig
-        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
-
       - name: Set Terraform Outputs
         id: tf_outputs
         run: |
@@ -88,38 +86,39 @@ jobs:
           echo "Extracted brokers (escaped for Helm): $brokers"
           echo "msk_bootstrap_brokers=$brokers" >> $GITHUB_OUTPUT
 
+      - name: Setup Kubeconfig
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
       - name: List EKS Access Entries
-        run: |
-          aws eks list-access-entries --cluster-name ${{ env.EKS_CLUSTER_NAME }}
+        run: aws eks list-access-entries --cluster-name ${{ env.EKS_CLUSTER_NAME }}
 
       - name: Create EKS Access Entries
         run: |
-          # aws eks create-access-entry \
-          #   --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
-          #   --principal-arn "${{ env.EKS_ADMIN_PRINCIPAL_ARN }}" \
-          #   --region ${{ env.AWS_REGION }}
-
           aws eks create-access-entry \
             --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
             --principal-arn "${{ env.CROSS_ACCOUNT_ADMIN_ASSUME_ROLE_ARN }}" \
             --region ${{ env.AWS_REGION }} || true
 
+          aws eks create-access-entry \
+            --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
+            --principal-arn "${{ env.SSO_ADMIN_PRINCIPAL_ARN }}" \
+            --region ${{ env.AWS_REGION }} || true
+
       - name: Grant EKS Admin Access to SSO Role
         run: |
-          # aws eks associate-access-policy \
-          #   --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
-          #   --principal-arn "${{ env.EKS_ADMIN_PRINCIPAL_ARN }}" \
-          #   --access-scope type=cluster \
-          #   --policy-arn ${{ env.EKS_ADMIN_POLICY_ARN }} \
-          #   --region ${{ env.AWS_REGION }}
-
           aws eks associate-access-policy \
             --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
             --principal-arn "${{ env.CROSS_ACCOUNT_ADMIN_ASSUME_ROLE_ARN }}" \
             --access-scope type=cluster \
             --policy-arn ${{ env.EKS_ADMIN_POLICY_ARN }} \
             --region ${{ env.AWS_REGION }} || true
-      
+
+          aws eks associate-access-policy \
+            --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
+            --principal-arn "${{ env.SSO_ADMIN_PRINCIPAL_ARN }}" \
+            --access-scope type=cluster \
+            --policy-arn ${{ env.EKS_ADMIN_POLICY_ARN }} \
+            --region ${{ env.AWS_REGION }} || true
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
