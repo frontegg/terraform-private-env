@@ -88,6 +88,10 @@ jobs:
           echo "Extracted brokers (escaped for Helm): $brokers"
           echo "msk_bootstrap_brokers=$brokers" >> $GITHUB_OUTPUT
 
+      - name: List EKS Access Entries
+        run: |
+          aws eks list-access-entries --cluster-name ${{ env.EKS_CLUSTER_NAME }}
+          
       - name: Grant EKS Admin Access to SSO Role
         run: |
           aws eks associate-access-policy \
@@ -95,11 +99,12 @@ jobs:
             --principal-arn "${{ env.EKS_ADMIN_PRINCIPAL_ARN }}" \
             --policy-arn ${{ env.EKS_ADMIN_POLICY_ARN }} \
             --access-scope type=cluster
-          aws eks associate-access-policy \
-            --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
-            --principal-arn "${{ env.CROSS_ACCOUNT_ADMIN_ASSUME_ROLE_ARN }}" \
-            --policy-arn ${{ env.EKS_ADMIN_POLICY_ARN }} \
-            --access-scope type=cluster
+          # aws eks associate-access-policy \
+          #   --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
+          #   --principal-arn "${{ env.CROSS_ACCOUNT_ADMIN_ASSUME_ROLE_ARN }}" \
+          #   --policy-arn ${{ env.EKS_ADMIN_POLICY_ARN }} \
+          #   --access-scope type=cluster
+      
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
