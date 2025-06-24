@@ -64,7 +64,7 @@ jobs:
       - name: Extract OPA S3 Bucket Name
         id: opa_bucket
         run: |
-          BUCKET_NAME=$(terraform output -raw opa_s3_bucket_name)
+          BUCKET_NAME=$(terraform output -raw opa_s3_bucket_name | head -n 1)
           echo "opa_s3_bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
 
       - name: Set Terraform Outputs
