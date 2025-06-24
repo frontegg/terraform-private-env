@@ -303,7 +303,6 @@ resource "random_string" "suffix" {
   upper   = false
 }
 
-
 module "s3_debezium_connector" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "4.7.0"
@@ -359,4 +358,35 @@ module "msk-logs" {
       }
     }
   }
+}
+
+module "opa-s3-bucket" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "4.7.0"
+
+  bucket                   = "frontegg-${local.environment}-opa-policy-${random_string.s3_bucket_suffix[0].result}"
+  acl                      = "private"
+  control_object_ownership = true
+  object_ownership         = "ObjectWriter"
+  force_destroy            = local.s3_force_destroy_buckets
+  versioning = {
+    enabled = true
+  }
+
+  server_side_encryption_configuration = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
+}
+
+resource "random_string" "s3_bucket_suffix" {
+  count   = local.config.settings.s3.enabled ? 1 : 0
+  length  = 6
+  special = false
+  upper   = false
+  lower   = true
+  numeric = true
 }

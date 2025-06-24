@@ -1,0 +1,26 @@
+global:
+  envId: "prod-frontegg-private-deployment-main-secret"
+debezium:
+  bootstrapServers: "<REPLACE_WITH_STATIC_BROKER>"
+environmentSetupJob:
+  email: "devops@frontegg.com"
+  password: "123456"
+  senderEmail: "devops+onprem@frontegg.com"
+configCenter:
+  frontegg:
+    services:
+      apiGatewayUrl: "https://api.backegg.io"
+      fronteggVendorHost: "backegg.io"
+    applications:
+      entitlements:
+        opaPolicyBucket: "frontegg-prod-opa-policy"
+      apiGateway:
+        apiGatewayIgnoredHosts: "localhost"
+      vendors:
+        vendorsServiceVendorsDomain: "backegg.io"
+    general:
+      portalUrl: "https://portal.backegg.io"
+      corsOrigin: "https://app.backegg.io"
+  externalServices:
+    aws:
+      region: "us-east-1"

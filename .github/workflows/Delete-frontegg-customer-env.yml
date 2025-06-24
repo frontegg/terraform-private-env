@@ -1,4 +1,4 @@
-name: Destroy Customer Environment
+name: Delete Customer Environment
 
 on:
   workflow_dispatch:

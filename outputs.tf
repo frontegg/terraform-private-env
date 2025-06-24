@@ -42,3 +42,8 @@ output "s3_buckets" {
     msk_logs_id                           = try(module.msk-logs[0].s3_bucket_id, null)
   }
 }
+
+output "opa_s3_bucket_name" {
+  description = "The name of the OPA S3 bucket."
+  value       = length(module.opa-s3-bucket) > 0 ? module.opa-s3-bucket.s3_bucket_id : null
+}

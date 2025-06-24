@@ -28,7 +28,6 @@ jobs:
       SETUP_JOB_SENDER_EMAIL: devops+onprem@frontegg.com
       API_GATEWAY_URL: https://api.backegg.io
       VENDOR_HOST: backegg.io
-      OPA_POLICY_BUCKET: frontegg-prod-opa-policy
       PORTAL_URL: https://portal.backegg.io
       CORS_ORIGIN: https://app.backegg.io
       API_GATEWAY_IGNORED_HOSTS: localhost
@@ -61,6 +60,12 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
+
+      - name: Extract OPA S3 Bucket Name
+        id: opa_bucket
+        run: |
+          BUCKET_NAME=$(terraform output -raw opa_s3_bucket_name)
+          echo "opa_s3_bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
 
       - name: Set Terraform Outputs
         id: tf_outputs
@@ -104,7 +109,7 @@ jobs:
             --principal-arn "${{ env.SSO_ADMIN_PRINCIPAL_ARN }}" \
             --region ${{ env.AWS_REGION }} || true
 
-      - name: Grant EKS Admin Access to SSO Role
+      - name: Grant EKS Admin Access to Admin Roles
         run: |
           aws eks associate-access-policy \
             --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
@@ -155,7 +160,7 @@ jobs:
             --set configCenter.frontegg.services.apiGatewayUrl=${{ env.API_GATEWAY_URL }} \
             --set configCenter.frontegg.services.fronteggVendorHost=${{ env.VENDOR_HOST }} \
             --set configCenter.externalServices.aws.region=${{ env.AWS_REGION }} \
-            --set configCenter.frontegg.applications.entitlements.opaPolicyBucket=${{ env.OPA_POLICY_BUCKET }} \
+            --set configCenter.frontegg.applications.entitlements.opaPolicyBucket=${{ steps.opa_bucket.outputs.opa_s3_bucket_name }} \
             --set configCenter.frontegg.general.portalUrl=${{ env.PORTAL_URL }} \
             --set configCenter.frontegg.general.corsOrigin=${{ env.CORS_ORIGIN }} \
             --set configCenter.frontegg.applications.apiGateway.apiGatewayIgnoredHosts=${{ env.API_GATEWAY_IGNORED_HOSTS }} \
