@@ -92,6 +92,18 @@ jobs:
         run: |
           aws eks list-access-entries --cluster-name ${{ env.EKS_CLUSTER_NAME }}
 
+      - name: Create EKS Access Entries
+        run: |
+          aws eks create-access-entry \
+            --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
+            --principal-arn "${{ env.EKS_ADMIN_PRINCIPAL_ARN }}" \
+            --region ${{ env.AWS_REGION }}
+
+          aws eks create-access-entry \
+            --cluster-name ${{ env.EKS_CLUSTER_NAME }} \
+            --principal-arn "${{ env.CROSS_ACCOUNT_ADMIN_ASSUME_ROLE_ARN }}" \
+            --region ${{ env.AWS_REGION }}
+
       - name: Grant EKS Admin Access to SSO Role
         run: |
           aws eks associate-access-policy \
