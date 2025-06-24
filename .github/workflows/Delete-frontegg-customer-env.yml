@@ -49,4 +49,12 @@ jobs:
             -backend-config="encrypt=true"
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve 
+        run: |
+          n=0
+          until [ "$n" -ge 3 ]
+          do
+            terraform destroy -auto-approve && break
+            n=$((n+1))
+            echo "Terraform destroy failed. Retrying ($n/3) in 10 seconds..."
+            sleep 10
+          done 
