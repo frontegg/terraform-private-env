@@ -54,18 +54,19 @@ jobs:
         id: tf_mysql
         run: |
           terraform output -json mysql_output | grep '^{' > mysql_output.json
+          terraform output -json mysql_pass | grep '^"' > mysql_pass.json
           echo "--- mysql_output.json content ---"
           cat mysql_output.json
           echo "---------------------------------"
           MYSQL_HOST=$(jq -r .db_instance_address mysql_output.json)
           MYSQL_USER=$(jq -r .db_instance_username mysql_output.json)
-          MYSQL_PASSWORD=$(terraform output -raw mysql_pass | tr -d '\n')
+          MYSQL_PASSWORD=$(jq -r . mysql_pass.json)
           echo "Extracted MYSQL_HOST: $MYSQL_HOST"
           echo "Extracted MYSQL_USER: $MYSQL_USER"
           echo "Extracted MYSQL_PASSWORD length: ${#MYSQL_PASSWORD}"
           echo "mysql_host=$MYSQL_HOST" >> $GITHUB_OUTPUT
           echo "mysql_user=$MYSQL_USER" >> $GITHUB_OUTPUT
-          echo "mysql_password=$(echo $MYSQL_PASSWORD)" >> $GITHUB_OUTPUT
+          echo "mysql_password=$MYSQL_PASSWORD" >> $GITHUB_OUTPUT
 
       - name: Extract Redis Terraform Outputs
         id: tf_redis
