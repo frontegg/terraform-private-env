@@ -128,12 +128,17 @@ jobs:
           MYSQL_USER: ${{ steps.tf_mysql.outputs.mysql_user }}
           MYSQL_PASSWORD: ${{ steps.tf_mysql.outputs.mysql_password }}
         run: |
-          echo "Testing MySQL connection..."
+          echo "=== Databases BEFORE dropping ==="
           kubectl run mysql-cli --image=mysql:8.0 -i --rm --restart=Never -n frontegg -- \
             mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SHOW DATABASES;"
-          echo "Dropping databases..."
+
+          echo -e "\n=== Dropping databases ==="
           kubectl run mysql-cli --image=mysql:8.0 -i --rm --restart=Never -n frontegg -- \
             mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "
+              SELECT CONCAT('Dropping database: ', SCHEMA_NAME) AS 'Operation'
+              FROM information_schema.SCHEMATA 
+              WHERE SCHEMA_NAME LIKE 'frontegg_%';
+              
               DROP DATABASE IF EXISTS frontegg_applications;
               DROP DATABASE IF EXISTS frontegg_audits;
               DROP DATABASE IF EXISTS frontegg_backoffice;
@@ -151,29 +156,101 @@ jobs:
               DROP DATABASE IF EXISTS frontegg_team_management;
               DROP DATABASE IF EXISTS frontegg_tenants;
               DROP DATABASE IF EXISTS frontegg_vendors;
-              DROP DATABASE IF EXISTS frontegg_webhooks;
-              SHOW DATABASES;
-            "
+              DROP DATABASE IF EXISTS frontegg_webhooks;"
+
+          echo -e "\n=== Databases AFTER dropping ==="
+          kubectl run mysql-cli --image=mysql:8.0 -i --rm --restart=Never -n frontegg -- \
+            mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "
+              SELECT 'Remaining frontegg databases:' AS 'Status';
+              SELECT SCHEMA_NAME AS 'Database'
+              FROM information_schema.SCHEMATA 
+              WHERE SCHEMA_NAME LIKE 'frontegg_%';"
 
       - name: Delete all Kafka topics
         env:
           KAFKA_BOOTSTRAP: ${{ steps.tf_kafka.outputs.kafka_bootstrap }}
         run: |
-          echo "Listing topics from Kafka cluster..."
-          TOPICS_TO_DELETE=$(kubectl run kafka-lister --image=edenhill/kcat:1.7.1 -i --rm --restart=Never -- -b "$KAFKA_BOOTSTRAP" -L | grep 'topic "' | awk -F'"' '{print $2}' | grep -v '^__')
+          echo "=== Topics BEFORE deletion ==="
+          kubectl run kafka-admin --image=wurstmeister/kafka:2.13-2.8.0 -i --rm --restart=Never --namespace frontegg \
+            --command -- bash -c "
+            KAFKA_OPTS='' /opt/kafka/bin/kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --list
+            "
 
-          if [ -z "$TOPICS_TO_DELETE" ]; then
+          echo -e "\n=== Creating topic deletion script ==="
+          cat << 'EOF' > delete_topics.sh
+          #!/bin/bash
+          set -e
+          
+          BOOTSTRAP="$1"
+          MAX_RETRIES=3
+          WAIT_TIME=30
+          
+          # List and filter topics
+          echo "Listing topics..."
+          TOPICS=$(/opt/kafka/bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -v '^__')
+          
+          if [ -z "$TOPICS" ]; then
             echo "No custom topics found to delete."
             exit 0
           fi
-
-          echo "Topics to be deleted:"
-          echo "$TOPICS_TO_DELETE"
-
-          for topic in $TOPICS_TO_DELETE; do
-            echo "Deleting topic: $topic"
-            kubectl run kafka-deleter --image=wurstmeister/kafka:2.13-2.8.0 -i --rm --restart=Never -- \
-            bash -c "KAFKA_OPTS='' /opt/kafka/bin/kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --delete --topic $topic"
-          done
-
-          echo "Topic deletion process complete."
+          
+          echo "Found topics to delete:"
+          echo "$TOPICS"
+          
+          # Create a file with all topics to delete
+          echo "$TOPICS" > topics_to_delete.txt
+          
+          # Function to check if a topic exists
+          topic_exists() {
+            /opt/kafka/bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -q "^$1$"
+          }
+          
+          # Delete topics with retry mechanism
+          while IFS= read -r topic; do
+            retries=0
+            while [ $retries -lt $MAX_RETRIES ]; do
+              echo "Attempting to delete topic: $topic (attempt $((retries + 1)))"
+              if /opt/kafka/bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topic "$topic" 2>/dev/null; then
+                echo "Successfully initiated deletion of topic: $topic"
+                break
+              fi
+              retries=$((retries + 1))
+              if [ $retries -lt $MAX_RETRIES ]; then
+                echo "Retrying in $WAIT_TIME seconds..."
+                sleep $WAIT_TIME
+              fi
+            done
+          done < topics_to_delete.txt
+          
+          # Wait for topics to be fully deleted
+          echo "Waiting for topics to be deleted..."
+          sleep $WAIT_TIME
+          
+          # Verify deletions
+          echo "Verifying topic deletions..."
+          REMAINING_TOPICS=$(/opt/kafka/bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -v '^__')
+          if [ -n "$REMAINING_TOPICS" ]; then
+            echo "Warning: Some non-system topics still exist:"
+            echo "$REMAINING_TOPICS"
+          else
+            echo "All custom topics have been deleted successfully!"
+          fi
+          EOF
+          
+          chmod +x delete_topics.sh
+          
+          echo -e "\n=== Executing topic deletion ==="
+          kubectl run kafka-admin --image=wurstmeister/kafka:2.13-2.8.0 -i --rm --restart=Never --namespace frontegg \
+            --command -- bash -c "
+            set -e
+            cd /tmp
+            cat > delete_topics.sh
+            chmod +x delete_topics.sh
+            ./delete_topics.sh '$KAFKA_BOOTSTRAP'
+            " < delete_topics.sh
+          
+          echo -e "\n=== Topics AFTER deletion ==="
+          kubectl run kafka-admin --image=wurstmeister/kafka:2.13-2.8.0 -i --rm --restart=Never --namespace frontegg \
+            --command -- bash -c "
+            KAFKA_OPTS='' /opt/kafka/bin/kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --list
+            "
