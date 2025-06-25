@@ -23,6 +23,7 @@ jobs:
             value     = random_password.mysql_password[0].result
             sensitive = true
           }' > mysql_password_output.tf
+          ls -la
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,6 +48,9 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
+
+      - name: Terraform MySQL Output
+        run: terraform output -json mysql_pass
 
       - name: Extract MySQL Terraform Outputs
         id: tf_mysql
