@@ -53,7 +53,7 @@ jobs:
       - name: Extract MySQL Terraform Outputs
         id: tf_mysql
         run: |
-          terraform output -json mysql_output > mysql_output.json
+          terraform output -json mysql_output | grep '^{' > mysql_output.json
           echo "--- mysql_output.json content ---"
           cat mysql_output.json
           echo "---------------------------------"
@@ -70,7 +70,7 @@ jobs:
       - name: Extract Redis Terraform Outputs
         id: tf_redis
         run: |
-          terraform output -json redis_output > redis_output.json
+          terraform output -json redis_output | grep '^{' > redis_output.json
           echo "--- redis_output.json content ---"
           cat redis_output.json
           echo "---------------------------------"
@@ -81,7 +81,7 @@ jobs:
       - name: Extract Kafka Terraform Outputs
         id: tf_kafka
         run: |
-          terraform output -json msk_output > msk_output.json
+          terraform output -json msk_output | grep '^{' > msk_output.json
           echo "--- msk_output.json content ---"
           cat msk_output.json
           echo "-------------------------------"
