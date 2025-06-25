@@ -51,16 +51,9 @@ jobs:
       - name: Extract MySQL Terraform Outputs
         id: tf_mysql
         run: |
-          MYSQL_OUTPUT=$(terraform output -json mysql_output 2>/dev/null)
-          if echo "$MYSQL_OUTPUT" | jq empty 2>/dev/null; then
-            MYSQL_HOST=$(echo "$MYSQL_OUTPUT" | jq -r '.db_instance_address')
-            MYSQL_USER=$(echo "$MYSQL_OUTPUT" | jq -r '.db_instance_username')
-          else
-            echo "mysql_output is not valid JSON or not present"
-            MYSQL_HOST=""
-            MYSQL_USER=""
-          fi
-          MYSQL_PASSWORD=$(terraform output -json mysql_pass | jq -r '.value')
+          MYSQL_HOST=$(terraform output mysql_output | grep 'db_instance_address' | sed 's/.*= \?"\?//;s/"\?$//')
+          MYSQL_USER=$(terraform output mysql_output | grep 'db_instance_username' | sed 's/.*= \?"\?//;s/"\?$//')
+          MYSQL_PASSWORD=$(terraform output mysql_pass | grep -E '^[^ ]' | tr -d '"')
           echo "Extracted MYSQL_HOST: $MYSQL_HOST"
           echo "Extracted MYSQL_USER: $MYSQL_USER"
           echo "Extracted MYSQL_PASSWORD: $MYSQL_PASSWORD"
@@ -71,20 +64,14 @@ jobs:
       - name: Extract Redis Terraform Outputs
         id: tf_redis
         run: |
-          REDIS_OUTPUT=$(terraform output -json redis_output 2>/dev/null)
-          if echo "$REDIS_OUTPUT" | jq empty 2>/dev/null; then
-            REDIS_HOST=$(echo "$REDIS_OUTPUT" | jq -r '.elasticache_replication_group_primary_endpoint_address')
-          else
-            echo "redis_output is not valid JSON or not present"
-            REDIS_HOST=""
-          fi
+          REDIS_HOST=$(terraform output redis_output | grep 'elasticache_replication_group_primary_endpoint_address' | sed 's/.*= \?"\?//;s/"\?$//')
           echo "Extracted REDIS_HOST: $REDIS_HOST"
           echo "redis_host=$REDIS_HOST" >> $GITHUB_OUTPUT
 
       - name: Extract Kafka Terraform Outputs
         id: tf_kafka
         run: |
-          KAFKA_BOOTSTRAP=$(terraform output -json msk_output | jq -r '.bootstrap_brokers_plaintext')
+          KAFKA_BOOTSTRAP=$(terraform output msk_output | grep 'bootstrap_brokers_plaintext' | sed 's/.*= \?"\?//;s/"\?$//')
           echo "Extracted KAFKA_BOOTSTRAP: $KAFKA_BOOTSTRAP"
           echo "kafka_bootstrap=$KAFKA_BOOTSTRAP" >> $GITHUB_OUTPUT
 
