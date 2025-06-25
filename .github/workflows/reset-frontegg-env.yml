@@ -204,6 +204,36 @@ jobs:
           WAIT_TIME=30
           CHECK_INTERVAL=5
           
+          # Function to check topic deletion status
+          check_topic_status() {
+            local topic="$1"
+            kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --describe --topic "$topic" 2>&1 | grep -q "Topic '$topic' does not exist"
+          }
+          
+          # Function to delete a single topic with monitoring
+          delete_single_topic() {
+            topic="$1"
+            echo "Deleting topic: $topic"
+            
+            if ! kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topic "$topic" 2>/dev/null; then
+              echo "Failed to initiate deletion for topic: $topic"
+              return 1
+            fi
+            
+            echo "Waiting for topic $topic to be deleted..."
+            start_time=$(date +%s)
+            while ! check_topic_status "$topic"; do
+              current_time=$(date +%s)
+              if [ $((current_time - start_time)) -gt 60 ]; then
+                echo "Timeout waiting for topic $topic to be deleted"
+                return 1
+              fi
+              sleep 5
+            done
+            echo "Topic $topic successfully deleted"
+            return 0
+          }
+          
           # List all topics
           echo "Listing all topics..."
           ALL_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list)
@@ -223,77 +253,25 @@ jobs:
           echo "Found application topics to delete:"
           echo "$TOPICS"
           
-          # Create topics.json for batch deletion
-          echo "{\"topics\": [" > topics.json
-          echo "$TOPICS" | sed 's/^/{"topic": "/; s/$/"},/' >> topics.json
-          sed -i '$ s/,$//' topics.json  # Remove trailing comma
-          echo "]}" >> topics.json
+          # Try individual deletions first since batch deletion seems problematic
+          echo "Starting individual topic deletions..."
+          failed_topics=""
           
-          echo "Topics JSON for batch deletion:"
-          cat topics.json
-          
-          # Function to check topic deletion status
-          check_topic_status() {
-            local topic="$1"
-            kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --describe --topic "$topic" 2>&1 | grep -q "Topic '$topic' does not exist"
-          }
-          
-          # Function to monitor deletion progress
-          monitor_deletion_progress() {
-            local topics_list="$1"
-            local total_topics=$(echo "$topics_list" | wc -l)
-            local deleted_topics=0
-            local start_time=$(date +%s)
-            local timeout=300  # 5 minutes timeout
-            
-            echo "Monitoring deletion progress for $total_topics topics..."
-            
-            while [ $deleted_topics -lt $total_topics ]; do
-              local current_time=$(date +%s)
-              local elapsed=$((current_time - start_time))
-              
-              if [ $elapsed -gt $timeout ]; then
-                echo "Timeout reached after ${timeout}s. Some topics may not have been deleted."
-                return 1
-              fi
-              
-              deleted_topics=0
-              while IFS= read -r topic; do
-                if check_topic_status "$topic"; then
-                  deleted_topics=$((deleted_topics + 1))
-                fi
-              done <<< "$topics_list"
-              
-              echo "Progress: $deleted_topics/$total_topics topics deleted (${elapsed}s elapsed)"
-              
-              if [ $deleted_topics -lt $total_topics ]; then
-                sleep $CHECK_INTERVAL
-              fi
-            done
-            
-            echo "All topics successfully deleted in ${elapsed}s!"
-            return 0
-          }
-          
-          # Attempt batch deletion with retries
-          retries=0
-          while [ $retries -lt $MAX_RETRIES ]; do
-            echo "Attempting batch deletion (attempt $((retries + 1)))"
-            if kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topics-json-file topics.json 2>/dev/null; then
-              echo "Successfully initiated batch deletion of topics"
-              echo "Monitoring deletion progress..."
-              if monitor_deletion_progress "$TOPICS"; then
-                break
-              fi
+          while IFS= read -r topic; do
+            if ! delete_single_topic "$topic"; then
+              echo "Failed to delete topic: $topic"
+              failed_topics="$failed_topics$topic"$'\n'
             fi
-            retries=$((retries + 1))
-            if [ $retries -lt $MAX_RETRIES ]; then
-              echo "Retrying batch deletion in $WAIT_TIME seconds..."
-              sleep $WAIT_TIME
-            fi
-          done
+          done <<< "$TOPICS"
           
-          # Verify final state
+          # Check if any topics failed to delete
+          if [ -n "$failed_topics" ]; then
+            echo "The following topics failed to delete:"
+            echo "$failed_topics"
+            exit 1
+          fi
+          
+          # Final verification
           echo "Performing final verification..."
           REMAINING_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | \
             grep -E '^(de-|identity\.|backoffice-service-|frontegg-|builder-|application-|authorization-|authentication-|event-|users-|tenants-|groups-|roles-|audits-|directory-|configuration-|accounts-|migration-|stale-|SLACK_|EMAIL_|SMS_|BELL_|AUDIT_|WEBHOOK_|WEBPUSH_|METADATA_|UPDATE_)' || true)
@@ -301,33 +279,7 @@ jobs:
           if [ -n "$REMAINING_TOPICS" ]; then
             echo "Warning: Some application topics still exist:"
             echo "$REMAINING_TOPICS"
-            # If batch deletion failed, try individual deletions as fallback
-            echo "Attempting individual deletions as fallback..."
-            echo "$REMAINING_TOPICS" | while read -r topic; do
-              echo "Deleting topic: $topic"
-              if kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topic "$topic" 2>/dev/null; then
-                echo "Waiting for topic $topic to be deleted..."
-                local start_time=$(date +%s)
-                while ! check_topic_status "$topic"; do
-                  if [ $(($(date +%s) - start_time)) -gt 60 ]; then
-                    echo "Timeout waiting for topic $topic to be deleted"
-                    break
-                  fi
-                  sleep 5
-                done
-              fi
-            done
-            
-            # Final verification
-            FINAL_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | \
-              grep -E '^(de-|identity\.|backoffice-service-|frontegg-|builder-|application-|authorization-|authentication-|event-|users-|tenants-|groups-|roles-|audits-|directory-|configuration-|accounts-|migration-|stale-|SLACK_|EMAIL_|SMS_|BELL_|AUDIT_|WEBHOOK_|WEBPUSH_|METADATA_|UPDATE_)' || true)
-            if [ -n "$FINAL_TOPICS" ]; then
-              echo "Warning: Some application topics still remain after fallback deletion:"
-              echo "$FINAL_TOPICS"
-              exit 1
-            else
-              echo "All application topics deleted successfully after fallback!"
-            fi
+            exit 1
           else
             echo "All application topics have been deleted successfully!"
           fi
