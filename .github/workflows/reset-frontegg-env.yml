@@ -3,6 +3,10 @@ name: Reset Frontegg Environment
 on:
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   reset-env:
     if: contains(fromJSON('["eyaltam1971"]'), github.actor)
@@ -27,17 +31,10 @@ jobs:
           echo "mysql_password=$(terraform output -raw mysql_password)" >> $GITHUB_OUTPUT
           echo "kafka_bootstrap=$(terraform output -raw kafka_bootstrap)" >> $GITHUB_OUTPUT
 
-    env:
-      MONGO_URI: ${{ steps.tf_outputs.outputs.mongo_uri }}
-      MYSQL_HOST: ${{ steps.tf_outputs.outputs.mysql_host }}
-      MYSQL_USER: ${{ steps.tf_outputs.outputs.mysql_user }}
-      MYSQL_PASSWORD: ${{ steps.tf_outputs.outputs.mysql_password }}
-      KAFKA_BOOTSTRAP: ${{ steps.tf_outputs.outputs.kafka_bootstrap }}
-      
       - name: Install MongoDB CLI
         run: |
           sudo apt-get update
-          sudo apt-get install -y mongodb-clients
+          sudo apt-get install -y mongodb-org-shell
 
       - name: Install MySQL CLI
         run: |
@@ -54,6 +51,8 @@ jobs:
           echo "$(pwd)/kafka_2.13-3.4.0/bin" >> $GITHUB_PATH
 
       - name: Drop all MongoDB collections
+        env:
+          MONGO_URI: ${{ steps.tf_outputs.outputs.mongo_uri }}
         run: |
           echo 'db.getMongo().getDBNames().forEach(function(dbName) {
             if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
@@ -61,9 +60,13 @@ jobs:
               db.getCollectionNames().forEach(function(c) { db[c].drop(); });
             }
           });' > drop_collections.js
-          mongo "$MONGO_URI" drop_collections.js
+          mongosh "$MONGO_URI" --file drop_collections.js
 
       - name: Drop MySQL databases
+        env:
+          MYSQL_HOST: ${{ steps.tf_outputs.outputs.mysql_host }}
+          MYSQL_USER: ${{ steps.tf_outputs.outputs.mysql_user }}
+          MYSQL_PASSWORD: ${{ steps.tf_outputs.outputs.mysql_password }}
         run: |
           MYSQL_PWD="$MYSQL_PASSWORD" mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -e "
             DROP DATABASE IF EXISTS frontegg_applications;
@@ -88,6 +91,8 @@ jobs:
           "
 
       - name: Delete all Kafka topics
+        env:
+          KAFKA_BOOTSTRAP: ${{ steps.tf_outputs.outputs.kafka_bootstrap }}
         run: |
           export PATH=$PATH:$(pwd)/kafka_2.13-3.4.0/bin
           # List all topics except internal ones
@@ -96,4 +101,4 @@ jobs:
           # Delete each topic
           while read topic; do
             kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP" --delete --topic "$topic"
-          done < topics.txt 
+          done < topics.txt
