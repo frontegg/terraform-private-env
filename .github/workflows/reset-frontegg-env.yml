@@ -191,7 +191,7 @@ jobs:
           echo "=== Topics BEFORE deletion ==="
           kubectl run kafka-admin --image=bitnami/kafka:3.6.1 -i --rm --restart=Never --namespace frontegg \
             --command -- bash -c "
-            kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --list
+            kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --list --exclude-internal
             "
 
           echo -e "\n=== Creating topic deletion script ==="
@@ -234,16 +234,13 @@ jobs:
             return 0
           }
           
-          # List all topics
-          echo "Listing all topics..."
-          ALL_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list)
+          # List all non-internal topics
+          echo "Listing non-internal topics..."
+          TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list --exclude-internal)
           
-          # Define our topic patterns
+          # Additional filter for our application topics
           echo "Filtering for our application topics..."
-          TOPICS=$(echo "$ALL_TOPICS" | grep -E '^(de-|identity\.|backoffice-service-|frontegg-|builder-|application-|authorization-|authentication-|event-|users-|tenants-|groups-|roles-|audits-|directory-|configuration-|accounts-|migration-|stale-|SLACK_|EMAIL_|SMS_|BELL_|AUDIT_|WEBHOOK_|WEBPUSH_|METADATA_|UPDATE_)' || true)
-          
-          # Explicitly exclude any system topics that might match our patterns
-          TOPICS=$(echo "$TOPICS" | grep -v -E '^(__.*|connect-.*|_.*|kafka-.*|schema-.*|KSTREAM.*|KTABLE.*|docker-.*)$' || true)
+          TOPICS=$(echo "$TOPICS" | grep -E '^(de-|identity\.|backoffice-service-|frontegg-|builder-|application-|authorization-|authentication-|event-|users-|tenants-|groups-|roles-|audits-|directory-|configuration-|accounts-|migration-|stale-|SLACK_|EMAIL_|SMS_|BELL_|AUDIT_|WEBHOOK_|WEBPUSH_|METADATA_|UPDATE_)' || true)
           
           if [ -z "$TOPICS" ]; then
             echo "No application topics found to delete."
@@ -253,7 +250,7 @@ jobs:
           echo "Found application topics to delete:"
           echo "$TOPICS"
           
-          # Try individual deletions first since batch deletion seems problematic
+          # Try individual deletions
           echo "Starting individual topic deletions..."
           failed_topics=""
           
@@ -273,7 +270,7 @@ jobs:
           
           # Final verification
           echo "Performing final verification..."
-          REMAINING_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | \
+          REMAINING_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list --exclude-internal | \
             grep -E '^(de-|identity\.|backoffice-service-|frontegg-|builder-|application-|authorization-|authentication-|event-|users-|tenants-|groups-|roles-|audits-|directory-|configuration-|accounts-|migration-|stale-|SLACK_|EMAIL_|SMS_|BELL_|AUDIT_|WEBHOOK_|WEBPUSH_|METADATA_|UPDATE_)' || true)
           
           if [ -n "$REMAINING_TOPICS" ]; then
@@ -300,5 +297,5 @@ jobs:
           echo -e "\n=== Topics AFTER deletion ==="
           kubectl run kafka-admin --image=bitnami/kafka:3.6.1 -i --rm --restart=Never --namespace frontegg \
             --command -- bash -c "
-            kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --list
+            kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --list --exclude-internal
             "
