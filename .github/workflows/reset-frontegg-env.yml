@@ -42,10 +42,10 @@ jobs:
         id: tf_outputs
         run: |
           echo "mongo_uri=mongodb://mongodb" >> $GITHUB_OUTPUT
-          echo "mysql_host=$(terraform output -raw mysql_host)" >> $GITHUB_OUTPUT
-          echo "mysql_user=$(terraform output -raw mysql_user)" >> $GITHUB_OUTPUT
-          echo "mysql_password=$(terraform output -raw mysql_password)" >> $GITHUB_OUTPUT
-          echo "kafka_bootstrap=$(terraform output -raw kafka_bootstrap)" >> $GITHUB_OUTPUT
+          echo "mysql_host=$(terraform output mysql_host)" >> $GITHUB_OUTPUT
+          echo "mysql_user=$(terraform output mysql_user)" >> $GITHUB_OUTPUT
+          echo "mysql_password=$(terraform output mysql_password)" >> $GITHUB_OUTPUT
+          echo "kafka_bootstrap=$(terraform output kafka_bootstrap)" >> $GITHUB_OUTPUT
 
       - name: Install MongoDB CLI
         run: |
