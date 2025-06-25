@@ -78,19 +78,12 @@ jobs:
           });' > drop_collections.js
           mongosh "$MONGO_URI" drop_collections.js
 
-      - name: Install MySQL CLI
+      - name: Flush all Redis keys
+        env:
+          REDIS_HOST: ${{ steps.tf_outputs.outputs.redis_host }}
+          REDIS_PORT: ${{ steps.tf_outputs.outputs.redis_port }}
         run: |
-          sudo apt-get install -y mysql-client
-
-      - name: Install Java (required for Kafka CLI)
-        run: |
-          sudo apt-get install -y openjdk-11-jre-headless
-
-      - name: Install Kafka CLI
-        run: |
-          wget https://archive.apache.org/dist/kafka/3.4.0/kafka_2.13-3.4.0.tgz
-          tar -xzf kafka_2.13-3.4.0.tgz
-          echo "$(pwd)/kafka_2.13-3.4.0/bin" >> $GITHUB_PATH
+          docker run --rm redis:7.2-alpine redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" FLUSHALL
 
       - name: Drop MySQL databases
         env:
@@ -98,37 +91,39 @@ jobs:
           MYSQL_USER: ${{ steps.tf_outputs.outputs.mysql_user }}
           MYSQL_PASSWORD: ${{ steps.tf_outputs.outputs.mysql_password }}
         run: |
-          MYSQL_PWD="$MYSQL_PASSWORD" mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -e "
-            DROP DATABASE IF EXISTS frontegg_applications;
-            DROP DATABASE IF EXISTS frontegg_audits;
-            DROP DATABASE IF EXISTS frontegg_backoffice;
-            DROP DATABASE IF EXISTS frontegg_custom_code;
-            DROP DATABASE IF EXISTS frontegg_dashboard_env_builder;
-            DROP DATABASE IF EXISTS frontegg_entitlements;
-            DROP DATABASE IF EXISTS frontegg_env_duplicator;
-            DROP DATABASE IF EXISTS frontegg_event_retry;
-            DROP DATABASE IF EXISTS frontegg_events;
-            DROP DATABASE IF EXISTS frontegg_identity;
-            DROP DATABASE IF EXISTS frontegg_logs_streaming;
-            DROP DATABASE IF EXISTS frontegg_oauth;
-            DROP DATABASE IF EXISTS frontegg_security_engines;
-            DROP DATABASE IF EXISTS frontegg_subscriptions;
-            DROP DATABASE IF EXISTS frontegg_team_management;
-            DROP DATABASE IF EXISTS frontegg_tenants;
-            DROP DATABASE IF EXISTS frontegg_vendors;
-            DROP DATABASE IF EXISTS frontegg_webhooks;
-            SHOW DATABASES;
-          "
+          docker run --rm -e MYSQL_PWD="$MYSQL_PASSWORD" mysql:8.0 \
+            mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -e "
+              DROP DATABASE IF EXISTS frontegg_applications;
+              DROP DATABASE IF EXISTS frontegg_audits;
+              DROP DATABASE IF EXISTS frontegg_backoffice;
+              DROP DATABASE IF EXISTS frontegg_custom_code;
+              DROP DATABASE IF EXISTS frontegg_dashboard_env_builder;
+              DROP DATABASE IF EXISTS frontegg_entitlements;
+              DROP DATABASE IF EXISTS frontegg_env_duplicator;
+              DROP DATABASE IF EXISTS frontegg_event_retry;
+              DROP DATABASE IF EXISTS frontegg_events;
+              DROP DATABASE IF EXISTS frontegg_identity;
+              DROP DATABASE IF EXISTS frontegg_logs_streaming;
+              DROP DATABASE IF EXISTS frontegg_oauth;
+              DROP DATABASE IF EXISTS frontegg_security_engines;
+              DROP DATABASE IF EXISTS frontegg_subscriptions;
+              DROP DATABASE IF EXISTS frontegg_team_management;
+              DROP DATABASE IF EXISTS frontegg_tenants;
+              DROP DATABASE IF EXISTS frontegg_vendors;
+              DROP DATABASE IF EXISTS frontegg_webhooks;
+              SHOW DATABASES;
+            "
 
       - name: Delete all Kafka topics
         env:
           KAFKA_BOOTSTRAP: ${{ steps.tf_outputs.outputs.kafka_bootstrap }}
         run: |
-          export PATH=$PATH:$(pwd)/kafka_2.13-3.4.0/bin
-          # List all topics except internal ones
-          kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP" --list | grep -v '^__' > topics.txt
-
-          # Delete each topic
+          # List topics
+          docker run --rm edenhill/kcat:1.7.1 -b "$KAFKA_BOOTSTRAP" -L | grep 'topic "' | awk -F'"' '{print $2}' | grep -v '^__' > topics.txt
+          echo "Topics to delete:"
+          cat topics.txt
+          # Delete each topic using Kafka CLI
           while read topic; do
-            kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP" --delete --topic "$topic"
+            docker run --rm wurstmeister/kafka:2.13-2.8.0 bash -c \
+              "KAFKA_OPTS='' /opt/kafka/bin/kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --delete --topic $topic"
           done < topics.txt
