@@ -75,7 +75,7 @@ jobs:
           echo "opa_s3_bucket_name=$OPA_BUCKET" > tf_output.txt
 
           # Extract EKS cluster security group ID
-          EKS_CLUSTER_SG=$(terraform output -raw eks_cluster_security_group_id || echo "")
+          EKS_CLUSTER_SG=$(terraform output -raw eks_cluster_security_group_id 2>/dev/null | grep -oE '^sg-[a-zA-Z0-9]+' | head -n 1)
           echo "Extracted EKS_CLUSTER_SG: '$EKS_CLUSTER_SG'"
           echo "eks_cluster_security_group_id=$EKS_CLUSTER_SG" >> tf_output.txt
 
