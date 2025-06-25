@@ -104,7 +104,11 @@ jobs:
           echo 'db.getMongo().getDBNames().forEach(function(dbName) {
             if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
               db = db.getSiblingDB(dbName);
-              db.getCollectionNames().forEach(function(c) { db[c].drop(); });
+              db.getCollectionNames().forEach(function(c) {
+                if (!c.startsWith("system.")) {
+                  db[c].drop();
+                }
+              });
             }
           });' > drop_collections.js
 
