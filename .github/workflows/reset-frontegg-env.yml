@@ -17,6 +17,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Create Terraform output file for MySQL password
+        run: |
+          cat <<EOF > mysql_password_output.tf
+            output "mysql_pass" {
+              value     = random_password.mysql_password[0].result
+              sensitive = true
+            }
+            EOF
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -43,13 +52,13 @@ jobs:
         run: |
           # Extract MySQL Output (sensitive)
           MYSQL_OUTPUT=$(terraform output -json mysql_output)
-          MYSQL_HOST=$(echo "$MYSQL_OUTPUT" | jq -r '.value.db_instance_address')
+          MYSQL_HOST=$(echo "$MYSQL_OUTPUT" | jq -r '.db_instance_address')
           echo "Extracted MYSQL_HOST: $MYSQL_HOST"
           echo "mysql_host=$MYSQL_HOST" >> $GITHUB_OUTPUT
 
           # Extract Redis Output (sensitive)
           REDIS_OUTPUT=$(terraform output -json redis_output)
-          REDIS_HOST=$(echo "$REDIS_OUTPUT" | jq -r '.value.host')
+          REDIS_HOST=$(echo "$REDIS_OUTPUT" | jq -r '.elasticache_replication_group_primary_endpoint_address')
           echo "Extracted REDIS_HOST: $REDIS_HOST"
           echo "redis_host=$REDIS_HOST" >> $GITHUB_OUTPUT
 
