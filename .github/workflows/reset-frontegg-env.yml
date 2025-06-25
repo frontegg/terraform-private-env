@@ -41,18 +41,22 @@ jobs:
       - name: Extract Terraform Outputs
         id: tf_outputs
         run: |
-          MYSQL_OUTPUT=$(terraform output -json mysql_output)
-          echo "mysql_host=$(echo \"$MYSQL_OUTPUT\" | jq -r .host)" >> $GITHUB_OUTPUT
-          echo "mysql_user=$(echo \"$MYSQL_OUTPUT\" | jq -r .username)" >> $GITHUB_OUTPUT
-          echo "mysql_password=$(echo \"$MYSQL_OUTPUT\" | jq -r .password)" >> $GITHUB_OUTPUT
+          # Extract MySQL Output
+          MYSQL_HOST=$(terraform output mysql_output | grep -o 'host = "[^"]*"' | sed 's/host = "\(.*\)"/\1/')
+          MYSQL_USER=$(terraform output mysql_output | grep -o 'username = "[^"]*"' | sed 's/username = "\(.*\)"/\1/')
+          MYSQL_PASSWORD=$(terraform output mysql_output | grep -o 'password = "[^"]*"' | sed 's/password = "\(.*\)"/\1/')
+          echo "mysql_host=$MYSQL_HOST" >> $GITHUB_OUTPUT
+          echo "mysql_user=$MYSQL_USER" >> $GITHUB_OUTPUT
+          echo "mysql_password=$MYSQL_PASSWORD" >> $GITHUB_OUTPUT
 
-          MSK_OUTPUT=$(terraform output -json msk_output)
-          echo "kafka_bootstrap=$(echo \"$MSK_OUTPUT\" | jq -r .bootstrap_brokers_plaintext)" >> $GITHUB_OUTPUT
+          # Extract MSK Output
+          KAFKA_BOOTSTRAP=$(terraform output msk_output | grep -o 'bootstrap_brokers_plaintext = "[^"]*"' | sed 's/bootstrap_brokers_plaintext = "\(.*\)"/\1/')
+          echo "kafka_bootstrap=$KAFKA_BOOTSTRAP" >> $GITHUB_OUTPUT
 
       - name: Install MongoDB CLI
         run: |
           sudo apt-get update
-          sudo apt-get install -y mongodb-org-shell
+          sudo apt-get install -y mongodb-clients
 
       - name: Install MySQL CLI
         run: |
@@ -78,7 +82,7 @@ jobs:
               db.getCollectionNames().forEach(function(c) { db[c].drop(); });
             }
           });' > drop_collections.js
-          mongosh "$MONGO_URI" --file drop_collections.js
+          mongo "$MONGO_URI" drop_collections.js
 
       - name: Drop MySQL databases
         env:
