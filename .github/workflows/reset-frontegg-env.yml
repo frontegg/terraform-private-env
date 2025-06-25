@@ -19,12 +19,10 @@ jobs:
     steps:
       - name: Create Terraform output file for MySQL password
         run: |
-          cat <<EOF > mysql_password_output.tf
-            output "mysql_pass" {
-              value     = random_password.mysql_password[0].result
-              sensitive = true
-            }
-            EOF
+          echo 'output "mysql_pass" {
+            value     = random_password.mysql_password[0].result
+            sensitive = true
+          }' > mysql_password_output.tf
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,14 +45,25 @@ jobs:
             -backend-config="dynamodb_table=frontegg-terraform-state-lock" \
             -backend-config="encrypt=true"
 
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
       - name: Extract Terraform Outputs
         id: tf_outputs
         run: |
           # Extract MySQL Output (sensitive)
           MYSQL_OUTPUT=$(terraform output -json mysql_output)
           MYSQL_HOST=$(echo "$MYSQL_OUTPUT" | jq -r '.db_instance_address')
+          MYSQL_USER=$(echo "$MYSQL_OUTPUT" | jq -r '.db_instance_username')
           echo "Extracted MYSQL_HOST: $MYSQL_HOST"
+          echo "Extracted MYSQL_USER: $MYSQL_USER"
           echo "mysql_host=$MYSQL_HOST" >> $GITHUB_OUTPUT
+          echo "mysql_user=$MYSQL_USER" >> $GITHUB_OUTPUT
+
+          # Extract MySQL Password from mysql_pass output
+          MYSQL_PASSWORD=$(terraform output -json mysql_pass | jq -r '.value')
+          echo "Extracted MYSQL_PASSWORD: $MYSQL_PASSWORD"
+          echo "mysql_password=$MYSQL_PASSWORD" >> $GITHUB_OUTPUT
 
           # Extract Redis Output (sensitive)
           REDIS_OUTPUT=$(terraform output -json redis_output)
