@@ -106,7 +106,6 @@ module "eks" {
   node_security_group_tags = {
     "karpenter.sh/discovery" = local.kubernetes_cluster_name
     "service"                = "frontegg private environment"
-    "kubernetes.io/cluster/${local.kubernetes_cluster_name}" = "shared"
   }
 }
 
