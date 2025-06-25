@@ -70,7 +70,7 @@ jobs:
 
       - name: Drop all MongoDB collections
         env:
-          MONGO_URI: ${{ steps.tf_outputs.outputs.mongo_uri }}
+          MONGO_URI: mongodb://mongodb
         run: |
           echo 'db.getMongo().getDBNames().forEach(function(dbName) {
             if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
