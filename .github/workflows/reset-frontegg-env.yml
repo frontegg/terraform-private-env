@@ -53,8 +53,12 @@ jobs:
       - name: Extract MySQL Terraform Outputs
         id: tf_mysql
         run: |
-          MYSQL_HOST=$(terraform output -json mysql_output | jq -r .db_instance_address)
-          MYSQL_USER=$(terraform output -json mysql_output | jq -r .db_instance_username)
+          terraform output -json mysql_output > mysql_output.json
+          echo "--- mysql_output.json content ---"
+          cat mysql_output.json
+          echo "---------------------------------"
+          MYSQL_HOST=$(jq -r .db_instance_address mysql_output.json)
+          MYSQL_USER=$(jq -r .db_instance_username mysql_output.json)
           MYSQL_PASSWORD=$(terraform output -raw mysql_pass)
           echo "Extracted MYSQL_HOST: $MYSQL_HOST"
           echo "Extracted MYSQL_USER: $MYSQL_USER"
@@ -66,14 +70,22 @@ jobs:
       - name: Extract Redis Terraform Outputs
         id: tf_redis
         run: |
-          REDIS_HOST=$(terraform output -json redis_output | jq -r .elasticache_replication_group_primary_endpoint_address)
+          terraform output -json redis_output > redis_output.json
+          echo "--- redis_output.json content ---"
+          cat redis_output.json
+          echo "---------------------------------"
+          REDIS_HOST=$(jq -r .elasticache_replication_group_primary_endpoint_address redis_output.json)
           echo "Extracted REDIS_HOST: $REDIS_HOST"
           echo "redis_host=$REDIS_HOST" >> $GITHUB_OUTPUT
 
       - name: Extract Kafka Terraform Outputs
         id: tf_kafka
         run: |
-          KAFKA_BOOTSTRAP=$(terraform output -json msk_output | jq -r .bootstrap_brokers_plaintext)
+          terraform output -json msk_output > msk_output.json
+          echo "--- msk_output.json content ---"
+          cat msk_output.json
+          echo "-------------------------------"
+          KAFKA_BOOTSTRAP=$(jq -r .bootstrap_brokers_plaintext msk_output.json)
           echo "Extracted KAFKA_BOOTSTRAP: $KAFKA_BOOTSTRAP"
           echo "kafka_bootstrap=$KAFKA_BOOTSTRAP" >> $GITHUB_OUTPUT
 
