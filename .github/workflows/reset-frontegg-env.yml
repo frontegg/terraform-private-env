@@ -17,6 +17,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Create Terraform output file for MySQL password
         run: |
           echo 'output "mysql_pass" {
@@ -24,9 +28,6 @@ jobs:
             sensitive = true
           }' > mysql_password_output.tf
           ls -la
-
-      - name: Checkout
-        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
