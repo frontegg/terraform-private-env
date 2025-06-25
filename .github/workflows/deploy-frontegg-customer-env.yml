@@ -152,7 +152,7 @@ jobs:
       - name: Pull and Patch Frontegg Core Services Chart
         run: |
           helm pull frontegg/frontegg-core-services --untar --destination . --devel
-          sed -i 's/| tpl .region //g' ./frontegg-core-services/templates/config-center.yaml
+          # sed -i 's/| tpl .region //g' ./frontegg-core-services/templates/config-center.yaml
 
       - name: Deploy Frontegg Core Services
         run: |
@@ -173,27 +173,27 @@ jobs:
             OPA_BUCKET="default-opa-bucket"
           fi
           
-      #     helm upgrade --install frontegg-core-services ./frontegg-core-services \
-      #       --namespace frontegg \
-      #       --create-namespace \
-      #       --devel \
-      #       --set global.envId=${{ env.GLOBAL_ENV_ID }} \
-      #       --set "debezium.bootstrapServers=$MSK_BROKERS" \
-      #       --set environmentSetupJob.email=${{ env.SETUP_JOB_EMAIL }} \
-      #       --set environmentSetupJob.password=${{ env.SETUP_JOB_PASSWORD }} \
-      #       --set environmentSetupJob.senderEmail=${{ env.SETUP_JOB_SENDER_EMAIL }} \
-      #       --set configCenter.frontegg.services.apiGatewayUrl=${{ env.API_GATEWAY_URL }} \
-      #       --set configCenter.frontegg.services.fronteggVendorHost=${{ env.VENDOR_HOST }} \
-      #       --set configCenter.externalServices.aws.region=${{ env.AWS_REGION }} \
-      #       --set "configCenter.frontegg.applications.entitlements.opaPolicyBucket=$OPA_BUCKET" \
-      #       --set configCenter.frontegg.general.portalUrl=${{ env.PORTAL_URL }} \
-      #       --set configCenter.frontegg.general.corsOrigin=${{ env.CORS_ORIGIN }} \
-      #       --set configCenter.frontegg.applications.apiGateway.apiGatewayIgnoredHosts=${{ env.API_GATEWAY_IGNORED_HOSTS }} \
-      #       --set configCenter.frontegg.applications.vendors.vendorsServiceVendorsDomain=${{ env.VENDORS_SERVICE_VENDORS_DOMAIN }}
+          helm upgrade --install frontegg-core-services ./frontegg-core-services \
+            --namespace frontegg \
+            --create-namespace \
+            --devel \
+            --set global.envId=${{ env.GLOBAL_ENV_ID }} \
+            --set "debezium.bootstrapServers=$MSK_BROKERS" \
+            --set environmentSetupJob.email=${{ env.SETUP_JOB_EMAIL }} \
+            --set environmentSetupJob.password=${{ env.SETUP_JOB_PASSWORD }} \
+            --set environmentSetupJob.senderEmail=${{ env.SETUP_JOB_SENDER_EMAIL }} \
+            --set configCenter.frontegg.services.apiGatewayUrl=${{ env.API_GATEWAY_URL }} \
+            --set configCenter.frontegg.services.fronteggVendorHost=${{ env.VENDOR_HOST }} \
+            --set configCenter.externalServices.aws.region=${{ env.AWS_REGION }} \
+            --set "configCenter.frontegg.applications.entitlements.opaPolicyBucket=$OPA_BUCKET" \
+            --set configCenter.frontegg.general.portalUrl=${{ env.PORTAL_URL }} \
+            --set configCenter.frontegg.general.corsOrigin=${{ env.CORS_ORIGIN }} \
+            --set configCenter.frontegg.applications.apiGateway.apiGatewayIgnoredHosts=${{ env.API_GATEWAY_IGNORED_HOSTS }} \
+            --set configCenter.frontegg.applications.vendors.vendorsServiceVendorsDomain=${{ env.VENDORS_SERVICE_VENDORS_DOMAIN }}
 
-      # - name: Deploy Frontegg Dashboard
-      #   run: |
-      #     helm upgrade --install frontegg-dashboard frontegg/frontegg-dashboard \
-      #       --namespace frontegg \
-      #       --devel \
-      #       --set global.envId=${{ env.GLOBAL_ENV_ID }}
+      - name: Deploy Frontegg Dashboard
+        run: |
+          helm upgrade --install frontegg-dashboard frontegg/frontegg-dashboard \
+            --namespace frontegg \
+            --devel \
+            --set global.envId=${{ env.GLOBAL_ENV_ID }}
