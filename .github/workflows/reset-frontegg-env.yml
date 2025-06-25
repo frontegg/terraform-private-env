@@ -171,9 +171,9 @@ jobs:
           KAFKA_BOOTSTRAP: ${{ steps.tf_kafka.outputs.kafka_bootstrap }}
         run: |
           echo "=== Topics BEFORE deletion ==="
-          kubectl run kafka-admin --image=wurstmeister/kafka:2.13-2.8.0 -i --rm --restart=Never --namespace frontegg \
+          kubectl run kafka-admin --image=bitnami/kafka:3.6.1 -i --rm --restart=Never --namespace frontegg \
             --command -- bash -c "
-            KAFKA_OPTS='' /opt/kafka/bin/kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --list
+            kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --list
             "
 
           echo -e "\n=== Creating topic deletion script ==="
@@ -187,7 +187,7 @@ jobs:
           
           # List and filter topics
           echo "Listing topics..."
-          TOPICS=$(/opt/kafka/bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -v '^__')
+          TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -v '^__')
           
           if [ -z "$TOPICS" ]; then
             echo "No custom topics found to delete."
@@ -202,7 +202,7 @@ jobs:
           
           # Function to check if a topic exists
           topic_exists() {
-            /opt/kafka/bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -q "^$1$"
+            kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -q "^$1$"
           }
           
           # Delete topics with retry mechanism
@@ -210,7 +210,7 @@ jobs:
             retries=0
             while [ $retries -lt $MAX_RETRIES ]; do
               echo "Attempting to delete topic: $topic (attempt $((retries + 1)))"
-              if /opt/kafka/bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topic "$topic" 2>/dev/null; then
+              if kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topic "$topic" 2>/dev/null; then
                 echo "Successfully initiated deletion of topic: $topic"
                 break
               fi
@@ -228,7 +228,7 @@ jobs:
           
           # Verify deletions
           echo "Verifying topic deletions..."
-          REMAINING_TOPICS=$(/opt/kafka/bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -v '^__')
+          REMAINING_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -v '^__')
           if [ -n "$REMAINING_TOPICS" ]; then
             echo "Warning: Some non-system topics still exist:"
             echo "$REMAINING_TOPICS"
@@ -240,7 +240,7 @@ jobs:
           chmod +x delete_topics.sh
           
           echo -e "\n=== Executing topic deletion ==="
-          kubectl run kafka-admin --image=wurstmeister/kafka:2.13-2.8.0 -i --rm --restart=Never --namespace frontegg \
+          kubectl run kafka-admin --image=bitnami/kafka:3.6.1 -i --rm --restart=Never --namespace frontegg \
             --command -- bash -c "
             set -e
             cd /tmp
@@ -250,7 +250,7 @@ jobs:
             " < delete_topics.sh
           
           echo -e "\n=== Topics AFTER deletion ==="
-          kubectl run kafka-admin --image=wurstmeister/kafka:2.13-2.8.0 -i --rm --restart=Never --namespace frontegg \
+          kubectl run kafka-admin --image=bitnami/kafka:3.6.1 -i --rm --restart=Never --namespace frontegg \
             --command -- bash -c "
-            KAFKA_OPTS='' /opt/kafka/bin/kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --list
+            kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --list
             "
