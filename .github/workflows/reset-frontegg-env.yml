@@ -41,10 +41,11 @@ jobs:
       - name: Extract Terraform Outputs
         id: tf_outputs
         run: |
-          # Extract MySQL Output
-          MYSQL_HOST=$(terraform output mysql_output | grep -o 'host = "[^"]*"' | sed 's/host = "\(.*\)"/\1/')
-          MYSQL_USER=$(terraform output mysql_output | grep -o 'username = "[^"]*"' | sed 's/username = "\(.*\)"/\1/')
-          MYSQL_PASSWORD=$(terraform output mysql_output | grep -o 'password = "[^"]*"' | sed 's/password = "\(.*\)"/\1/')
+          # Extract MySQL Output (sensitive)
+          MYSQL_OUTPUT=$(terraform output -json mysql_output)
+          MYSQL_HOST=$(echo "$MYSQL_OUTPUT" | jq -r '.value.host')
+          MYSQL_USER=$(echo "$MYSQL_OUTPUT" | jq -r '.value.username')
+          MYSQL_PASSWORD=$(echo "$MYSQL_OUTPUT" | jq -r '.value.password')
           echo "Extracted MYSQL_HOST: $MYSQL_HOST"
           echo "Extracted MYSQL_USER: $MYSQL_USER"
           echo "Extracted MYSQL_PASSWORD: $MYSQL_PASSWORD"
@@ -52,19 +53,19 @@ jobs:
           echo "mysql_user=$MYSQL_USER" >> $GITHUB_OUTPUT
           echo "mysql_password=$MYSQL_PASSWORD" >> $GITHUB_OUTPUT
 
-          # Extract MSK Output
-          KAFKA_BOOTSTRAP=$(terraform output msk_output | grep -o 'bootstrap_brokers_plaintext = "[^"]*"' | sed 's/bootstrap_brokers_plaintext = "\(.*\)"/\1/')
+          # Extract Redis Output (sensitive)
+          REDIS_OUTPUT=$(terraform output -json redis_output)
+          REDIS_HOST=$(echo "$REDIS_OUTPUT" | jq -r '.value.host')
+          REDIS_PORT=$(echo "$REDIS_OUTPUT" | jq -r '.value.port')
+          echo "Extracted REDIS_HOST: $REDIS_HOST"
+          echo "Extracted REDIS_PORT: $REDIS_PORT"
+          echo "redis_host=$REDIS_HOST" >> $GITHUB_OUTPUT
+          echo "redis_port=$REDIS_PORT" >> $GITHUB_OUTPUT
+
+          # Extract MSK Output (not sensitive)
+          KAFKA_BOOTSTRAP=$(terraform output -json msk_output | jq -r '.bootstrap_brokers_plaintext')
           echo "Extracted KAFKA_BOOTSTRAP: $KAFKA_BOOTSTRAP"
           echo "kafka_bootstrap=$KAFKA_BOOTSTRAP" >> $GITHUB_OUTPUT
-
-      - name: Install MongoDB Shell (mongosh)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget gnupg
-          wget -qO - https://pgp.mongodb.com/server-6.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-6.0.gpg
-          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
-          sudo apt-get update
-          sudo apt-get install -y mongodb-mongosh
 
       - name: Drop all MongoDB collections
         env:
@@ -76,7 +77,7 @@ jobs:
               db.getCollectionNames().forEach(function(c) { db[c].drop(); });
             }
           });' > drop_collections.js
-          mongosh "$MONGO_URI" drop_collections.js
+          docker run --rm -v $(pwd)/drop_collections.js:/drop_collections.js mongo:7.0 mongosh "$MONGO_URI" /drop_collections.js
 
       - name: Flush all Redis keys
         env:
