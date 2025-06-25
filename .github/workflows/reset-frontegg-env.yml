@@ -13,6 +13,7 @@ jobs:
     env:
       AWS_REGION: us-east-1
       AWS_ASSUME_ROLE_ARN: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
+      EKS_CLUSTER_NAME: private-env-prod-eks
 
     runs-on: ubuntu-latest
 
@@ -20,6 +21,23 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Kubeconfig
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} || true
+
+      - name: Uninstall Frontegg Core Services
+        run: |
+          helm uninstall frontegg-core-services --namespace frontegg || true
+
+      - name: Uninstall Frontegg Dashboard
+        run: |
+          helm uninstall frontegg-dashboard --namespace frontegg || true
 
       - name: Create Terraform output file for MySQL password
         run: |
@@ -184,17 +202,25 @@ jobs:
           BOOTSTRAP="$1"
           MAX_RETRIES=3
           WAIT_TIME=30
+          CHECK_INTERVAL=5
           
-          # List and filter topics
-          echo "Listing topics..."
-          TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -v '^__')
+          # List all topics
+          echo "Listing all topics..."
+          ALL_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list)
+          
+          # Define our topic patterns
+          echo "Filtering for our application topics..."
+          TOPICS=$(echo "$ALL_TOPICS" | grep -E '^(de-|identity\.|backoffice-service-|frontegg-|builder-|application-|authorization-|authentication-|event-|users-|tenants-|groups-|roles-|audits-|directory-|configuration-|accounts-|migration-|stale-|SLACK_|EMAIL_|SMS_|BELL_|AUDIT_|WEBHOOK_|WEBPUSH_|METADATA_|UPDATE_)' || true)
+          
+          # Explicitly exclude any system topics that might match our patterns
+          TOPICS=$(echo "$TOPICS" | grep -v -E '^(__.*|connect-.*|_.*|kafka-.*|schema-.*|KSTREAM.*|KTABLE.*|docker-.*)$' || true)
           
           if [ -z "$TOPICS" ]; then
-            echo "No custom topics found to delete."
+            echo "No application topics found to delete."
             exit 0
           fi
           
-          echo "Found topics to delete:"
+          echo "Found application topics to delete:"
           echo "$TOPICS"
           
           # Create topics.json for batch deletion
@@ -206,13 +232,59 @@ jobs:
           echo "Topics JSON for batch deletion:"
           cat topics.json
           
+          # Function to check topic deletion status
+          check_topic_status() {
+            local topic="$1"
+            kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --describe --topic "$topic" 2>&1 | grep -q "Topic '$topic' does not exist"
+          }
+          
+          # Function to monitor deletion progress
+          monitor_deletion_progress() {
+            local topics_list="$1"
+            local total_topics=$(echo "$topics_list" | wc -l)
+            local deleted_topics=0
+            local start_time=$(date +%s)
+            local timeout=300  # 5 minutes timeout
+            
+            echo "Monitoring deletion progress for $total_topics topics..."
+            
+            while [ $deleted_topics -lt $total_topics ]; do
+              local current_time=$(date +%s)
+              local elapsed=$((current_time - start_time))
+              
+              if [ $elapsed -gt $timeout ]; then
+                echo "Timeout reached after ${timeout}s. Some topics may not have been deleted."
+                return 1
+              fi
+              
+              deleted_topics=0
+              while IFS= read -r topic; do
+                if check_topic_status "$topic"; then
+                  deleted_topics=$((deleted_topics + 1))
+                fi
+              done <<< "$topics_list"
+              
+              echo "Progress: $deleted_topics/$total_topics topics deleted (${elapsed}s elapsed)"
+              
+              if [ $deleted_topics -lt $total_topics ]; then
+                sleep $CHECK_INTERVAL
+              fi
+            done
+            
+            echo "All topics successfully deleted in ${elapsed}s!"
+            return 0
+          }
+          
           # Attempt batch deletion with retries
           retries=0
           while [ $retries -lt $MAX_RETRIES ]; do
             echo "Attempting batch deletion (attempt $((retries + 1)))"
             if kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topics-json-file topics.json 2>/dev/null; then
               echo "Successfully initiated batch deletion of topics"
-              break
+              echo "Monitoring deletion progress..."
+              if monitor_deletion_progress "$TOPICS"; then
+                break
+              fi
             fi
             retries=$((retries + 1))
             if [ $retries -lt $MAX_RETRIES ]; then
@@ -221,32 +293,43 @@ jobs:
             fi
           done
           
-          # Wait for topics to be fully deleted
-          echo "Waiting for topics to be deleted..."
-          sleep $WAIT_TIME
+          # Verify final state
+          echo "Performing final verification..."
+          REMAINING_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | \
+            grep -E '^(de-|identity\.|backoffice-service-|frontegg-|builder-|application-|authorization-|authentication-|event-|users-|tenants-|groups-|roles-|audits-|directory-|configuration-|accounts-|migration-|stale-|SLACK_|EMAIL_|SMS_|BELL_|AUDIT_|WEBHOOK_|WEBPUSH_|METADATA_|UPDATE_)' || true)
           
-          # Verify deletions
-          echo "Verifying topic deletions..."
-          REMAINING_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -v '^__')
           if [ -n "$REMAINING_TOPICS" ]; then
-            echo "Warning: Some non-system topics still exist:"
+            echo "Warning: Some application topics still exist:"
             echo "$REMAINING_TOPICS"
             # If batch deletion failed, try individual deletions as fallback
             echo "Attempting individual deletions as fallback..."
             echo "$REMAINING_TOPICS" | while read -r topic; do
               echo "Deleting topic: $topic"
-              kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topic "$topic" 2>/dev/null || true
+              if kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topic "$topic" 2>/dev/null; then
+                echo "Waiting for topic $topic to be deleted..."
+                local start_time=$(date +%s)
+                while ! check_topic_status "$topic"; do
+                  if [ $(($(date +%s) - start_time)) -gt 60 ]; then
+                    echo "Timeout waiting for topic $topic to be deleted"
+                    break
+                  fi
+                  sleep 5
+                done
+              fi
             done
+            
             # Final verification
-            FINAL_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -v '^__')
+            FINAL_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | \
+              grep -E '^(de-|identity\.|backoffice-service-|frontegg-|builder-|application-|authorization-|authentication-|event-|users-|tenants-|groups-|roles-|audits-|directory-|configuration-|accounts-|migration-|stale-|SLACK_|EMAIL_|SMS_|BELL_|AUDIT_|WEBHOOK_|WEBPUSH_|METADATA_|UPDATE_)' || true)
             if [ -n "$FINAL_TOPICS" ]; then
-              echo "Warning: Some topics still remain after fallback deletion:"
+              echo "Warning: Some application topics still remain after fallback deletion:"
               echo "$FINAL_TOPICS"
+              exit 1
             else
-              echo "All topics deleted successfully after fallback!"
+              echo "All application topics deleted successfully after fallback!"
             fi
           else
-            echo "All custom topics have been deleted successfully!"
+            echo "All application topics have been deleted successfully!"
           fi
           EOF
           
