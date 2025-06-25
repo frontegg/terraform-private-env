@@ -50,14 +50,11 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
-      - name: Terraform MySQL Output
-        run: terraform output -json mysql_pass
-
       - name: Extract MySQL Terraform Outputs
         id: tf_mysql
         run: |
-          MYSQL_HOST=$(terraform output mysql_output | grep 'db_instance_address' | sed 's/.*= \?"\?//;s/"\?$//')
-          MYSQL_USER=$(terraform output mysql_output | grep 'db_instance_username' | sed 's/.*= \?"\?//;s/"\?$//')
+          MYSQL_HOST=$(terraform output mysql_output | grep 'db_instance_address' | head -n1 | awk -F'= ' '{print $2}' | tr -d '"')
+          MYSQL_USER=$(terraform output mysql_output | grep 'db_instance_username' | head -n1 | awk -F'= ' '{print $2}' | tr -d '"')
           MYSQL_PASSWORD=$(terraform output mysql_pass | grep -E '^[^ ]' | tr -d '"')
           echo "Extracted MYSQL_HOST: $MYSQL_HOST"
           echo "Extracted MYSQL_USER: $MYSQL_USER"
