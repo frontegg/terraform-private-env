@@ -127,8 +127,7 @@ jobs:
           MYSQL_USER: ${{ steps.tf_mysql.outputs.mysql_user }}
           MYSQL_PASSWORD: ${{ steps.tf_mysql.outputs.mysql_password }}
         run: |
-          docker run --rm -e MYSQL_PWD="$MYSQL_PASSWORD" mysql:8.0 \
-            mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -e "
+          kubectl run mysql-cli --image=mysql:8.0 -i --rm --restart=Never --env="MYSQL_PWD=$MYSQL_PASSWORD" --command -- mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -e "
               DROP DATABASE IF EXISTS frontegg_applications;
               DROP DATABASE IF EXISTS frontegg_audits;
               DROP DATABASE IF EXISTS frontegg_backoffice;
@@ -154,12 +153,21 @@ jobs:
         env:
           KAFKA_BOOTSTRAP: ${{ steps.tf_kafka.outputs.kafka_bootstrap }}
         run: |
-          # List topics
-          docker run --rm edenhill/kcat:1.7.1 -b "$KAFKA_BOOTSTRAP" -L | grep 'topic "' | awk -F'"' '{print $2}' | grep -v '^__' > topics.txt
-          echo "Topics to delete:"
-          cat topics.txt
-          # Delete each topic using Kafka CLI
-          while read topic; do
-            docker run --rm wurstmeister/kafka:2.13-2.8.0 bash -c \
-              "KAFKA_OPTS='' /opt/kafka/bin/kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --delete --topic $topic"
-          done < topics.txt
+          echo "Listing topics from Kafka cluster..."
+          TOPICS_TO_DELETE=$(kubectl run kafka-lister --image=edenhill/kcat:1.7.1 -i --rm --restart=Never -- -b "$KAFKA_BOOTSTRAP" -L | grep 'topic "' | awk -F'"' '{print $2}' | grep -v '^__')
+
+          if [ -z "$TOPICS_TO_DELETE" ]; then
+            echo "No custom topics found to delete."
+            exit 0
+          fi
+
+          echo "Topics to be deleted:"
+          echo "$TOPICS_TO_DELETE"
+
+          for topic in $TOPICS_TO_DELETE; do
+            echo "Deleting topic: $topic"
+            kubectl run kafka-deleter --image=wurstmeister/kafka:2.13-2.8.0 -i --rm --restart=Never -- \
+            bash -c "KAFKA_OPTS='' /opt/kafka/bin/kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --delete --topic $topic"
+          done
+
+          echo "Topic deletion process complete."
