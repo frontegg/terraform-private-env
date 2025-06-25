@@ -13,7 +13,7 @@ jobs:
     env:
       AWS_REGION: us-east-1
       AWS_ASSUME_ROLE_ARN: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
-      
+
     runs-on: ubuntu-latest
 
     steps:
@@ -41,7 +41,7 @@ jobs:
       - name: Extract Terraform Outputs
         id: tf_outputs
         run: |
-          echo "mongo_uri=$(terraform output -raw mongo_uri)" >> $GITHUB_OUTPUT
+          echo "mongo_uri=mongodb://mongodb" >> $GITHUB_OUTPUT
           echo "mysql_host=$(terraform output -raw mysql_host)" >> $GITHUB_OUTPUT
           echo "mysql_user=$(terraform output -raw mysql_user)" >> $GITHUB_OUTPUT
           echo "mysql_password=$(terraform output -raw mysql_password)" >> $GITHUB_OUTPUT
