@@ -1,0 +1,99 @@
+name: Reset Frontegg Environment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reset-env:
+    if: contains(fromJSON('["eyaltam1971"]'), github.actor)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Extract Terraform Outputs
+        id: tf_outputs
+        run: |
+          echo "mongo_uri=$(terraform output -raw mongo_uri)" >> $GITHUB_OUTPUT
+          echo "mysql_host=$(terraform output -raw mysql_host)" >> $GITHUB_OUTPUT
+          echo "mysql_user=$(terraform output -raw mysql_user)" >> $GITHUB_OUTPUT
+          echo "mysql_password=$(terraform output -raw mysql_password)" >> $GITHUB_OUTPUT
+          echo "kafka_bootstrap=$(terraform output -raw kafka_bootstrap)" >> $GITHUB_OUTPUT
+
+    env:
+      MONGO_URI: ${{ steps.tf_outputs.outputs.mongo_uri }}
+      MYSQL_HOST: ${{ steps.tf_outputs.outputs.mysql_host }}
+      MYSQL_USER: ${{ steps.tf_outputs.outputs.mysql_user }}
+      MYSQL_PASSWORD: ${{ steps.tf_outputs.outputs.mysql_password }}
+      KAFKA_BOOTSTRAP: ${{ steps.tf_outputs.outputs.kafka_bootstrap }}
+      
+      - name: Install MongoDB CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mongodb-clients
+
+      - name: Install MySQL CLI
+        run: |
+          sudo apt-get install -y mysql-client
+
+      - name: Install Java (required for Kafka CLI)
+        run: |
+          sudo apt-get install -y openjdk-11-jre-headless
+
+      - name: Install Kafka CLI
+        run: |
+          wget https://archive.apache.org/dist/kafka/3.4.0/kafka_2.13-3.4.0.tgz
+          tar -xzf kafka_2.13-3.4.0.tgz
+          echo "$(pwd)/kafka_2.13-3.4.0/bin" >> $GITHUB_PATH
+
+      - name: Drop all MongoDB collections
+        run: |
+          echo 'db.getMongo().getDBNames().forEach(function(dbName) {
+            if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
+              db = db.getSiblingDB(dbName);
+              db.getCollectionNames().forEach(function(c) { db[c].drop(); });
+            }
+          });' > drop_collections.js
+          mongo "$MONGO_URI" drop_collections.js
+
+      - name: Drop MySQL databases
+        run: |
+          MYSQL_PWD="$MYSQL_PASSWORD" mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -e "
+            DROP DATABASE IF EXISTS frontegg_applications;
+            DROP DATABASE IF EXISTS frontegg_audits;
+            DROP DATABASE IF EXISTS frontegg_backoffice;
+            DROP DATABASE IF EXISTS frontegg_custom_code;
+            DROP DATABASE IF EXISTS frontegg_dashboard_env_builder;
+            DROP DATABASE IF EXISTS frontegg_entitlements;
+            DROP DATABASE IF EXISTS frontegg_env_duplicator;
+            DROP DATABASE IF EXISTS frontegg_event_retry;
+            DROP DATABASE IF EXISTS frontegg_events;
+            DROP DATABASE IF EXISTS frontegg_identity;
+            DROP DATABASE IF EXISTS frontegg_logs_streaming;
+            DROP DATABASE IF EXISTS frontegg_oauth;
+            DROP DATABASE IF EXISTS frontegg_security_engines;
+            DROP DATABASE IF EXISTS frontegg_subscriptions;
+            DROP DATABASE IF EXISTS frontegg_team_management;
+            DROP DATABASE IF EXISTS frontegg_tenants;
+            DROP DATABASE IF EXISTS frontegg_vendors;
+            DROP DATABASE IF EXISTS frontegg_webhooks;
+            SHOW DATABASES;
+          "
+
+      - name: Delete all Kafka topics
+        run: |
+          export PATH=$PATH:$(pwd)/kafka_2.13-3.4.0/bin
+          # List all topics except internal ones
+          kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP" --list | grep -v '^__' > topics.txt
+
+          # Delete each topic
+          while read topic; do
+            kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP" --delete --topic "$topic"
+          done < topics.txt 
