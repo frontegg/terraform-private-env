@@ -10,11 +10,21 @@ permissions:
 jobs:
   reset-env:
     if: contains(fromJSON('["eyaltam1971"]'), github.actor)
+    env:
+      AWS_REGION: us-east-1
+      AWS_ASSUME_ROLE_ARN: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
+      
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ASSUME_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
