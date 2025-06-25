@@ -54,7 +54,8 @@ jobs:
             echo "Pods still exist. Waiting 10 seconds before next check..."
             sleep 10
           done
-          echo "There are still pods running in the frontegg namespace after waiting. Please check and try again."
+          echo "There are still pods running in the frontegg namespace after waiting. Please check and tr
+          y again."
           exit 1
 
       - name: Uninstall NGINX Ingress Controller

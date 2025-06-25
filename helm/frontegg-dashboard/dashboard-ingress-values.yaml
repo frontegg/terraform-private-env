@@ -1,4 +1,4 @@
-api-gateway:
+portal:
   ingresses:
     tesla:
       enabled: true
@@ -18,8 +18,9 @@ api-gateway:
           }
         nginx.ingress.kubernetes.io/enable-opentelemetry: "true"
       rules:
-        - hostname: "*.onprem.backegg.io"
+        - hostname: "portal.onprem.backegg.io"
           paths:
             - path: /
               servicePort: 80
               pathType: ImplementationSpecific
+
