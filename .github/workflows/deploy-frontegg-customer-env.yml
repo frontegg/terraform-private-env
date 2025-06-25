@@ -26,10 +26,10 @@ jobs:
       SETUP_JOB_EMAIL: devops@frontegg.com
       SETUP_JOB_PASSWORD: '123456'
       SETUP_JOB_SENDER_EMAIL: devops+onprem@frontegg.com
-      API_GATEWAY_URL: https://api.backegg.io
-      VENDOR_HOST: backegg.io
-      PORTAL_URL: https://portal.backegg.io
-      CORS_ORIGIN: https://app.backegg.io
+      API_GATEWAY_URL: https://api.onprem.backegg.io
+      VENDOR_HOST: onprem.backegg.io
+      PORTAL_URL: https://portal.onprem.backegg.io
+      CORS_ORIGIN: https://portal.onprem.backegg.io
       API_GATEWAY_IGNORED_HOSTS: localhost
       VENDORS_SERVICE_VENDORS_DOMAIN: backegg.io
       
@@ -145,6 +145,29 @@ jobs:
             --namespace frontegg \
             --create-namespace \
             --values ./helm/mongodb6/values.yaml
+
+      # Add NGINX Ingress Controller before Frontegg Core Services
+      - name: Add NGINX Ingress Repository
+        run: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx && helm repo update
+
+      - name: Deploy NGINX Ingress Controller
+        run: |
+          helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx \
+            --namespace ingress-nginx \
+            --create-namespace
+
+      # Install ExternalDNS for automatic DNS record management
+      - name: Add ExternalDNS Repository
+        run: helm repo add bitnami https://charts.bitnami.com/bitnami && helm repo update
+
+      - name: Deploy ExternalDNS
+        run: |
+          helm upgrade --install external-dns bitnami/external-dns \
+            --namespace external-dns \
+            --create-namespace \
+            --set provider=aws \
+            --set aws.region=${{ env.AWS_REGION }} \
+            --set txtOwnerId=${{ env.EKS_CLUSTER_NAME }}
 
       - name: Add Frontegg Helm Repository
         run: helm repo add frontegg https://frontegg.github.io/helm-charts && helm repo update
