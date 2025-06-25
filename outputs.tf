@@ -47,3 +47,8 @@ output "opa_s3_bucket_name" {
   description = "The name of the OPA S3 bucket."
   value       = length(module.opa-s3-bucket) > 0 ? module.opa-s3-bucket.s3_bucket_id : null
 }
+
+output "eks_cluster_security_group_id" {
+  description = "The security group ID for the EKS cluster (control plane). Use for NGINX AWS LB."
+  value       = local.config.settings.eks.config.enabled && length(module.eks) > 0 ? module.eks[0].cluster_security_group_id : null
+}

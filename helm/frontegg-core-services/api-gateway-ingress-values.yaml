@@ -1,0 +1,24 @@
+ingresses:
+  api-gateway:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: 4m
+      nginx.ingress.kubernetes.io/configuration-snippet: |
+        more_clear_input_headers "Host" "X-Forwarded-Host";
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Host $http_x_forwarded_host;
+        proxy_set_header X-Trace-ID $opentelemetry_trace_id;
+      nginx.ingress.kubernetes.io/server-snippet: |
+        add_header Cache-Control "no-transform";
+        location ~* ^/(metrics|healthcheck) {
+          deny all;
+          return 403;
+        }
+      nginx.ingress.kubernetes.io/enable-opentelemetry: "true"
+    rules:
+      - hostname: "*.onprem.backegg.io"
+        paths:
+          - path: /
+            servicePort: 80
+            pathType: ImplementationSpecific

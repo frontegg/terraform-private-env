@@ -33,6 +33,38 @@ jobs:
       - name: Setup Kubeconfig
         run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} || true
 
+      - name: Uninstall Frontegg Core Services
+        run: |
+          helm uninstall frontegg-core-services --namespace frontegg || true
+
+      - name: Uninstall Frontegg Dashboard
+        run: |
+          helm uninstall frontegg-dashboard --namespace frontegg || true
+
+      - name: Check if all pods are deleted
+        run: |
+          for i in {1..10}; do
+            echo "Iteration $i: Checking pods in frontegg namespace..."
+            kubectl get pods --namespace frontegg
+            PODS=$(kubectl get pods --namespace frontegg --no-headers 2>/dev/null | wc -l)
+            if [ "$PODS" -eq 0 ]; then
+              echo "All pods are deleted."
+              exit 0
+            fi
+            echo "Pods still exist. Waiting 10 seconds before next check..."
+            sleep 10
+          done
+          echo "There are still pods running in the frontegg namespace after waiting. Please check and try again."
+          exit 1
+
+      - name: Uninstall NGINX Ingress Controller
+        run: |
+          helm uninstall nginx-ingress --namespace ingress-nginx || true
+
+      - name: Uninstall ExternalDNS
+        run: |
+          helm uninstall external-dns --namespace external-dns || true
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:

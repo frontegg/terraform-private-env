@@ -1,0 +1,14 @@
+ingresses:
+  portal:
+    enabled: true
+    ingressClassName: nginx
+    hostname: "portal.onprem.backegg.io"
+    service:
+      name: frontegg-dashboard
+      port: 80
+    annotations:
+      nginx.ingress.kubernetes.io/server-snippet: |
+        location ~* ^/(metrics|health) {
+          deny all;
+          return 403;
+        }

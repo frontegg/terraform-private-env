@@ -24,8 +24,8 @@ jobs:
       TF_STATE_LOCK_TABLE: frontegg-terraform-state-lock
       GLOBAL_ENV_ID: prod-frontegg-private-deployment-main-secret
       SETUP_JOB_EMAIL: devops@frontegg.com
-      SETUP_JOB_PASSWORD: '123456'
-      SETUP_JOB_SENDER_EMAIL: devops+onprem@frontegg.com
+      SETUP_JOB_PASSWORD: 'Fe123456!@'
+      SETUP_JOB_SENDER_EMAIL: hello@onprem.backegg.io
       API_GATEWAY_URL: https://api.onprem.backegg.io
       VENDOR_HOST: onprem.backegg.io
       PORTAL_URL: https://portal.onprem.backegg.io
@@ -73,6 +73,11 @@ jobs:
           OPA_BUCKET=$(terraform output opa_s3_bucket_name | grep -E '^"[a-zA-Z0-9-]+"$' | head -n 1 | tr -d '"' | tr -d '\n')
           echo "Extracted OPA_BUCKET: '$OPA_BUCKET'"
           echo "opa_s3_bucket_name=$OPA_BUCKET" > tf_output.txt
+
+          # Extract EKS cluster security group ID
+          EKS_CLUSTER_SG=$(terraform output -raw eks_cluster_security_group_id || echo "")
+          echo "Extracted EKS_CLUSTER_SG: '$EKS_CLUSTER_SG'"
+          echo "eks_cluster_security_group_id=$EKS_CLUSTER_SG" >> tf_output.txt
 
           # Extract MSK Output (as JSON)
           terraform output -json msk_output > /tmp/msk_output.json
@@ -154,7 +159,7 @@ jobs:
           helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx \
             --namespace ingress-nginx \
             --create-namespace \
-            --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-security-groups"=sg-010e2e1c20abf895d
+            --set controller.service.annotations."service.beta.kubernetes.io/aws-load-balancer-security-groups"=${{ steps.tf_outputs.outputs.eks_cluster_security_group_id }}
 
       - name: Add ExternalDNS Repository
         run: helm repo add bitnami https://charts.bitnami.com/bitnami && helm repo update
@@ -211,11 +216,13 @@ jobs:
             --set configCenter.frontegg.general.portalUrl=${{ env.PORTAL_URL }} \
             --set configCenter.frontegg.general.corsOrigin=${{ env.CORS_ORIGIN }} \
             --set configCenter.frontegg.applications.apiGateway.apiGatewayIgnoredHosts=${{ env.API_GATEWAY_IGNORED_HOSTS }} \
-            --set configCenter.frontegg.applications.vendors.vendorsServiceVendorsDomain=${{ env.VENDORS_SERVICE_VENDORS_DOMAIN }}
+            --set configCenter.frontegg.applications.vendors.vendorsServiceVendorsDomain=${{ env.VENDORS_SERVICE_VENDORS_DOMAIN }} \
+            --values ./helm/frontegg-core-services/api-gateway-ingress-values.yaml
 
       - name: Deploy Frontegg Dashboard
         run: |
           helm upgrade --install frontegg-dashboard frontegg/frontegg-dashboard \
             --namespace frontegg \
             --devel \
-            --set global.envId=${{ env.GLOBAL_ENV_ID }}
+            --set global.envId=${{ env.GLOBAL_ENV_ID }} \
+            --values ./helm/frontegg-dashboard/dashboard-ingress-values.yaml
