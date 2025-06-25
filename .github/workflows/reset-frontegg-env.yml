@@ -59,10 +59,10 @@ jobs:
           echo "---------------------------------"
           MYSQL_HOST=$(jq -r .db_instance_address mysql_output.json)
           MYSQL_USER=$(jq -r .db_instance_username mysql_output.json)
-          MYSQL_PASSWORD=$(terraform output -raw mysql_pass)
+          MYSQL_PASSWORD=$(terraform output -raw mysql_pass | tr -d '\n')
           echo "Extracted MYSQL_HOST: $MYSQL_HOST"
           echo "Extracted MYSQL_USER: $MYSQL_USER"
-          echo "Extracted MYSQL_PASSWORD: $MYSQL_PASSWORD"
+          echo "Extracted MYSQL_PASSWORD length: ${#MYSQL_PASSWORD}"
           echo "mysql_host=$MYSQL_HOST" >> $GITHUB_OUTPUT
           echo "mysql_user=$MYSQL_USER" >> $GITHUB_OUTPUT
           echo "mysql_password=$(echo $MYSQL_PASSWORD)" >> $GITHUB_OUTPUT
