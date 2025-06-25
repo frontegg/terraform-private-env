@@ -43,24 +43,15 @@ jobs:
         run: |
           # Extract MySQL Output (sensitive)
           MYSQL_OUTPUT=$(terraform output -json mysql_output)
-          MYSQL_HOST=$(echo "$MYSQL_OUTPUT" | jq -r '.value.host')
-          MYSQL_USER=$(echo "$MYSQL_OUTPUT" | jq -r '.value.username')
-          MYSQL_PASSWORD=$(echo "$MYSQL_OUTPUT" | jq -r '.value.password')
+          MYSQL_HOST=$(echo "$MYSQL_OUTPUT" | jq -r '.value.db_instance_address')
           echo "Extracted MYSQL_HOST: $MYSQL_HOST"
-          echo "Extracted MYSQL_USER: $MYSQL_USER"
-          echo "Extracted MYSQL_PASSWORD: $MYSQL_PASSWORD"
           echo "mysql_host=$MYSQL_HOST" >> $GITHUB_OUTPUT
-          echo "mysql_user=$MYSQL_USER" >> $GITHUB_OUTPUT
-          echo "mysql_password=$MYSQL_PASSWORD" >> $GITHUB_OUTPUT
 
           # Extract Redis Output (sensitive)
           REDIS_OUTPUT=$(terraform output -json redis_output)
           REDIS_HOST=$(echo "$REDIS_OUTPUT" | jq -r '.value.host')
-          REDIS_PORT=$(echo "$REDIS_OUTPUT" | jq -r '.value.port')
           echo "Extracted REDIS_HOST: $REDIS_HOST"
-          echo "Extracted REDIS_PORT: $REDIS_PORT"
           echo "redis_host=$REDIS_HOST" >> $GITHUB_OUTPUT
-          echo "redis_port=$REDIS_PORT" >> $GITHUB_OUTPUT
 
           # Extract MSK Output (not sensitive)
           KAFKA_BOOTSTRAP=$(terraform output -json msk_output | jq -r '.bootstrap_brokers_plaintext')
@@ -82,9 +73,8 @@ jobs:
       - name: Flush all Redis keys
         env:
           REDIS_HOST: ${{ steps.tf_outputs.outputs.redis_host }}
-          REDIS_PORT: ${{ steps.tf_outputs.outputs.redis_port }}
         run: |
-          docker run --rm redis:7.2-alpine redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" FLUSHALL
+          docker run --rm redis:7.2-alpine redis-cli -h "$REDIS_HOST" -p 6379 FLUSHALL
 
       - name: Drop MySQL databases
         env:
