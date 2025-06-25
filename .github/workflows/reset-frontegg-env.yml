@@ -96,7 +96,7 @@ jobs:
 
       - name: Drop all MongoDB collections
         env:
-          MONGO_URI: "mongodb://mongodb-mongodb-replicaset-0.mongodb-mongodb-replicaset.frontegg.svc.cluster.local:27017,mongodb-mongodb-replicaset-1.mongodb-mongodb-replicaset.frontegg.svc.cluster.local:27017,mongodb-mongodb-replicaset-2.mongodb-mongodb-replicaset.frontegg.svc.cluster.local:27017/?replicaSet=rs0"
+          MONGO_URI: "mongodb://mongodb.frontegg.svc.cluster.local:27017/"
         run: |
           POD_NAME=$(kubectl get pods --namespace frontegg -l "app.kubernetes.io/name=mongodb,app.kubernetes.io/instance=mongodb,app.kubernetes.io/component=mongodb" -o jsonpath="{.items[0].metadata.name}")
           echo "Executing command on pod: $POD_NAME"
