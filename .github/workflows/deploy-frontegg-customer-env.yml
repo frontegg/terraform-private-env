@@ -152,7 +152,7 @@ jobs:
       - name: Pull and Patch Frontegg Core Services Chart
         run: |
           helm pull frontegg/frontegg-core-services --untar --destination . --devel
-          # sed -i 's/| tpl .region //g' ./frontegg-core-services/templates/config-center.yaml
+          sed -i 's/| tpl .region //g' ./frontegg-core-services/templates/config-center.yaml
 
       - name: Deploy Frontegg Core Services
         run: |
