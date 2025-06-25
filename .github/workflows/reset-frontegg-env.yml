@@ -119,7 +119,7 @@ jobs:
         env:
           REDIS_HOST: ${{ steps.tf_redis.outputs.redis_host }}
         run: |
-          docker run --rm redis:7.2-alpine redis-cli -h "$REDIS_HOST" -p 6379 FLUSHALL
+          kubectl run redis-cli --image=redis:7.2-alpine -i --rm --restart=Never --command -- redis-cli -h "$REDIS_HOST" -p 6379 FLUSHALL
 
       - name: Drop MySQL databases
         env:
