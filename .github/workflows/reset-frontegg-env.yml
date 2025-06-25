@@ -92,7 +92,7 @@ jobs:
       - name: Configure Kubectl
         run: |
           aws eks update-kubeconfig --name private-env-prod-eks --region ${{ env.AWS_REGION }}
-          kubectl get pods -A
+          kubectl get pods -n frontegg
 
       - name: Drop all MongoDB collections
         env:
@@ -127,7 +127,12 @@ jobs:
           MYSQL_USER: ${{ steps.tf_mysql.outputs.mysql_user }}
           MYSQL_PASSWORD: ${{ steps.tf_mysql.outputs.mysql_password }}
         run: |
-          kubectl run mysql-cli --image=mysql:8.0 -i --rm --restart=Never --env="MYSQL_PWD=$MYSQL_PASSWORD" --command -- mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -e "
+          echo "Testing MySQL connection..."
+          kubectl run mysql-cli --image=mysql:8.0 -i --rm --restart=Never -n frontegg -- \
+            mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SHOW DATABASES;"
+          echo "Dropping databases..."
+          kubectl run mysql-cli --image=mysql:8.0 -i --rm --restart=Never -n frontegg -- \
+            mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "
               DROP DATABASE IF EXISTS frontegg_applications;
               DROP DATABASE IF EXISTS frontegg_audits;
               DROP DATABASE IF EXISTS frontegg_backoffice;
