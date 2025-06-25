@@ -197,30 +197,29 @@ jobs:
           echo "Found topics to delete:"
           echo "$TOPICS"
           
-          # Create a file with all topics to delete
-          echo "$TOPICS" > topics_to_delete.txt
+          # Create topics.json for batch deletion
+          echo "{\"topics\": [" > topics.json
+          echo "$TOPICS" | sed 's/^/{"topic": "/; s/$/"},/' >> topics.json
+          sed -i '$ s/,$//' topics.json  # Remove trailing comma
+          echo "]}" >> topics.json
           
-          # Function to check if a topic exists
-          topic_exists() {
-            kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -q "^$1$"
-          }
+          echo "Topics JSON for batch deletion:"
+          cat topics.json
           
-          # Delete topics with retry mechanism
-          while IFS= read -r topic; do
-            retries=0
-            while [ $retries -lt $MAX_RETRIES ]; do
-              echo "Attempting to delete topic: $topic (attempt $((retries + 1)))"
-              if kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topic "$topic" 2>/dev/null; then
-                echo "Successfully initiated deletion of topic: $topic"
-                break
-              fi
-              retries=$((retries + 1))
-              if [ $retries -lt $MAX_RETRIES ]; then
-                echo "Retrying in $WAIT_TIME seconds..."
-                sleep $WAIT_TIME
-              fi
-            done
-          done < topics_to_delete.txt
+          # Attempt batch deletion with retries
+          retries=0
+          while [ $retries -lt $MAX_RETRIES ]; do
+            echo "Attempting batch deletion (attempt $((retries + 1)))"
+            if kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topics-json-file topics.json 2>/dev/null; then
+              echo "Successfully initiated batch deletion of topics"
+              break
+            fi
+            retries=$((retries + 1))
+            if [ $retries -lt $MAX_RETRIES ]; then
+              echo "Retrying batch deletion in $WAIT_TIME seconds..."
+              sleep $WAIT_TIME
+            fi
+          done
           
           # Wait for topics to be fully deleted
           echo "Waiting for topics to be deleted..."
@@ -232,6 +231,20 @@ jobs:
           if [ -n "$REMAINING_TOPICS" ]; then
             echo "Warning: Some non-system topics still exist:"
             echo "$REMAINING_TOPICS"
+            # If batch deletion failed, try individual deletions as fallback
+            echo "Attempting individual deletions as fallback..."
+            echo "$REMAINING_TOPICS" | while read -r topic; do
+              echo "Deleting topic: $topic"
+              kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topic "$topic" 2>/dev/null || true
+            done
+            # Final verification
+            FINAL_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -v '^__')
+            if [ -n "$FINAL_TOPICS" ]; then
+              echo "Warning: Some topics still remain after fallback deletion:"
+              echo "$FINAL_TOPICS"
+            else
+              echo "All topics deleted successfully after fallback!"
+            fi
           else
             echo "All custom topics have been deleted successfully!"
           fi
