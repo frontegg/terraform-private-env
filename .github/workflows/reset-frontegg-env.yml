@@ -45,18 +45,38 @@ jobs:
           MYSQL_HOST=$(terraform output mysql_output | grep -o 'host = "[^"]*"' | sed 's/host = "\(.*\)"/\1/')
           MYSQL_USER=$(terraform output mysql_output | grep -o 'username = "[^"]*"' | sed 's/username = "\(.*\)"/\1/')
           MYSQL_PASSWORD=$(terraform output mysql_output | grep -o 'password = "[^"]*"' | sed 's/password = "\(.*\)"/\1/')
+          echo "Extracted MYSQL_HOST: $MYSQL_HOST"
+          echo "Extracted MYSQL_USER: $MYSQL_USER"
+          echo "Extracted MYSQL_PASSWORD: $MYSQL_PASSWORD"
           echo "mysql_host=$MYSQL_HOST" >> $GITHUB_OUTPUT
           echo "mysql_user=$MYSQL_USER" >> $GITHUB_OUTPUT
           echo "mysql_password=$MYSQL_PASSWORD" >> $GITHUB_OUTPUT
 
           # Extract MSK Output
           KAFKA_BOOTSTRAP=$(terraform output msk_output | grep -o 'bootstrap_brokers_plaintext = "[^"]*"' | sed 's/bootstrap_brokers_plaintext = "\(.*\)"/\1/')
+          echo "Extracted KAFKA_BOOTSTRAP: $KAFKA_BOOTSTRAP"
           echo "kafka_bootstrap=$KAFKA_BOOTSTRAP" >> $GITHUB_OUTPUT
 
-      - name: Install MongoDB CLI
+      - name: Install MongoDB Shell (mongosh)
         run: |
           sudo apt-get update
-          sudo apt-get install -y mongodb-clients
+          sudo apt-get install -y wget gnupg
+          wget -qO - https://pgp.mongodb.com/server-6.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-6.0.gpg
+          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+          sudo apt-get update
+          sudo apt-get install -y mongodb-mongosh
+
+      - name: Drop all MongoDB collections
+        env:
+          MONGO_URI: mongodb://mongodb
+        run: |
+          echo 'db.getMongo().getDBNames().forEach(function(dbName) {
+            if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
+              db = db.getSiblingDB(dbName);
+              db.getCollectionNames().forEach(function(c) { db[c].drop(); });
+            }
+          });' > drop_collections.js
+          mongosh "$MONGO_URI" drop_collections.js
 
       - name: Install MySQL CLI
         run: |
@@ -71,18 +91,6 @@ jobs:
           wget https://archive.apache.org/dist/kafka/3.4.0/kafka_2.13-3.4.0.tgz
           tar -xzf kafka_2.13-3.4.0.tgz
           echo "$(pwd)/kafka_2.13-3.4.0/bin" >> $GITHUB_PATH
-
-      - name: Drop all MongoDB collections
-        env:
-          MONGO_URI: mongodb://mongodb
-        run: |
-          echo 'db.getMongo().getDBNames().forEach(function(dbName) {
-            if (dbName !== "admin" && dbName !== "local" && dbName !== "config") {
-              db = db.getSiblingDB(dbName);
-              db.getCollectionNames().forEach(function(c) { db[c].drop(); });
-            }
-          });' > drop_collections.js
-          mongo "$MONGO_URI" drop_collections.js
 
       - name: Drop MySQL databases
         env:
