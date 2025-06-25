@@ -48,30 +48,42 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
-      - name: Extract Terraform Outputs
-        id: tf_outputs
+      - name: Extract MySQL Terraform Outputs
+        id: tf_mysql
         run: |
-          # Extract MySQL Output (sensitive)
-          MYSQL_OUTPUT=$(terraform output -json mysql_output)
-          MYSQL_HOST=$(echo "$MYSQL_OUTPUT" | jq -r '.db_instance_address')
-          MYSQL_USER=$(echo "$MYSQL_OUTPUT" | jq -r '.db_instance_username')
+          MYSQL_OUTPUT=$(terraform output -json mysql_output 2>/dev/null)
+          if echo "$MYSQL_OUTPUT" | jq empty 2>/dev/null; then
+            MYSQL_HOST=$(echo "$MYSQL_OUTPUT" | jq -r '.db_instance_address')
+            MYSQL_USER=$(echo "$MYSQL_OUTPUT" | jq -r '.db_instance_username')
+          else
+            echo "mysql_output is not valid JSON or not present"
+            MYSQL_HOST=""
+            MYSQL_USER=""
+          fi
+          MYSQL_PASSWORD=$(terraform output -json mysql_pass | jq -r '.value')
           echo "Extracted MYSQL_HOST: $MYSQL_HOST"
           echo "Extracted MYSQL_USER: $MYSQL_USER"
+          echo "Extracted MYSQL_PASSWORD: $MYSQL_PASSWORD"
           echo "mysql_host=$MYSQL_HOST" >> $GITHUB_OUTPUT
           echo "mysql_user=$MYSQL_USER" >> $GITHUB_OUTPUT
-
-          # Extract MySQL Password from mysql_pass output
-          MYSQL_PASSWORD=$(terraform output -json mysql_pass | jq -r '.value')
-          echo "Extracted MYSQL_PASSWORD: $MYSQL_PASSWORD"
           echo "mysql_password=$MYSQL_PASSWORD" >> $GITHUB_OUTPUT
 
-          # Extract Redis Output (sensitive)
-          REDIS_OUTPUT=$(terraform output -json redis_output)
-          REDIS_HOST=$(echo "$REDIS_OUTPUT" | jq -r '.elasticache_replication_group_primary_endpoint_address')
+      - name: Extract Redis Terraform Outputs
+        id: tf_redis
+        run: |
+          REDIS_OUTPUT=$(terraform output -json redis_output 2>/dev/null)
+          if echo "$REDIS_OUTPUT" | jq empty 2>/dev/null; then
+            REDIS_HOST=$(echo "$REDIS_OUTPUT" | jq -r '.elasticache_replication_group_primary_endpoint_address')
+          else
+            echo "redis_output is not valid JSON or not present"
+            REDIS_HOST=""
+          fi
           echo "Extracted REDIS_HOST: $REDIS_HOST"
           echo "redis_host=$REDIS_HOST" >> $GITHUB_OUTPUT
 
-          # Extract MSK Output (not sensitive)
+      - name: Extract Kafka Terraform Outputs
+        id: tf_kafka
+        run: |
           KAFKA_BOOTSTRAP=$(terraform output -json msk_output | jq -r '.bootstrap_brokers_plaintext')
           echo "Extracted KAFKA_BOOTSTRAP: $KAFKA_BOOTSTRAP"
           echo "kafka_bootstrap=$KAFKA_BOOTSTRAP" >> $GITHUB_OUTPUT
@@ -90,15 +102,15 @@ jobs:
 
       - name: Flush all Redis keys
         env:
-          REDIS_HOST: ${{ steps.tf_outputs.outputs.redis_host }}
+          REDIS_HOST: ${{ steps.tf_redis.outputs.redis_host }}
         run: |
           docker run --rm redis:7.2-alpine redis-cli -h "$REDIS_HOST" -p 6379 FLUSHALL
 
       - name: Drop MySQL databases
         env:
-          MYSQL_HOST: ${{ steps.tf_outputs.outputs.mysql_host }}
-          MYSQL_USER: ${{ steps.tf_outputs.outputs.mysql_user }}
-          MYSQL_PASSWORD: ${{ steps.tf_outputs.outputs.mysql_password }}
+          MYSQL_HOST: ${{ steps.tf_mysql.outputs.mysql_host }}
+          MYSQL_USER: ${{ steps.tf_mysql.outputs.mysql_user }}
+          MYSQL_PASSWORD: ${{ steps.tf_mysql.outputs.mysql_password }}
         run: |
           docker run --rm -e MYSQL_PWD="$MYSQL_PASSWORD" mysql:8.0 \
             mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -e "
@@ -125,7 +137,7 @@ jobs:
 
       - name: Delete all Kafka topics
         env:
-          KAFKA_BOOTSTRAP: ${{ steps.tf_outputs.outputs.kafka_bootstrap }}
+          KAFKA_BOOTSTRAP: ${{ steps.tf_kafka.outputs.kafka_bootstrap }}
         run: |
           # List topics
           docker run --rm edenhill/kcat:1.7.1 -b "$KAFKA_BOOTSTRAP" -L | grep 'topic "' | awk -F'"' '{print $2}' | grep -v '^__' > topics.txt
