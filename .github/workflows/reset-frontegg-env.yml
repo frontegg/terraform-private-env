@@ -89,16 +89,9 @@ jobs:
           echo "Extracted KAFKA_BOOTSTRAP: $KAFKA_BOOTSTRAP"
           echo "kafka_bootstrap=$KAFKA_BOOTSTRAP" >> $GITHUB_OUTPUT
 
-      - name: Extract EKS Terraform Outputs
-        id: tf_eks
-        run: |
-          terraform output -json eks_output > eks_output.json
-          EKS_CLUSTER_NAME=$(jq -r .cluster_name eks_output.json)
-          echo "eks_cluster_name=$EKS_CLUSTER_NAME" >> $GITHUB_OUTPUT
-
       - name: Configure Kubectl
         run: |
-          aws eks update-kubeconfig --name ${{ steps.tf_eks.outputs.eks_cluster_name }} --region ${{ env.AWS_REGION }}
+          aws eks update-kubeconfig --name private-env-prod-eks --region ${{ env.AWS_REGION }}
           kubectl get pods -A
 
       - name: Drop all MongoDB collections
