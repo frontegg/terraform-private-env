@@ -20,7 +20,13 @@ jobs:
         uses: hashicorp/setup-terraform@v2
 
       - name: Terraform Init
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config="bucket=frontegg-tfstate-109940070146-us-east-1" \
+            -backend-config="key=tf-state/frontegg/private-env/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="dynamodb_table=frontegg-terraform-state-lock" \
+            -backend-config="encrypt=true"
 
       - name: Extract Terraform Outputs
         id: tf_outputs
