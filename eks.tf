@@ -219,6 +219,8 @@ data "aws_iam_policy_document" "load_balancing" {
       "ec2:Get*",
       "ec2:List*",
       "ec2:RevokeSecurityGroupIngress",
+      "ec2:AuthorizeSecurityGroupIngress",
+      "ec2:AuthorizeSecurityGroupEgress",
       "elasticloadbalancing:*",
       "elasticloadbalancing:RemoveTags",
       "iam:CreateServiceLinkedRole",
