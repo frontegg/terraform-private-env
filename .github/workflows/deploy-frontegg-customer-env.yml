@@ -32,6 +32,7 @@ jobs:
       CORS_ORIGIN: https://portal.onprem.backegg.io
       API_GATEWAY_IGNORED_HOSTS: localhost
       VENDORS_SERVICE_VENDORS_DOMAIN: backegg.io
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN_BACKEGG_IO }}
       
     steps:
       - name: Checkout
@@ -181,8 +182,9 @@ jobs:
           helm upgrade --install external-dns bitnami/external-dns \
             --namespace external-dns \
             --create-namespace \
-            --set provider=aws \
-            --set aws.region=${{ env.AWS_REGION }} \
+            --set provider=cloudflare \
+            --set cloudflare.apiToken=${{ env.CLOUDFLARE_API_TOKEN }} \
+            --set domainFilters[0]=backegg.io \
             --set txtOwnerId=${{ env.EKS_CLUSTER_NAME }}
 
       - name: Add Frontegg Helm Repository

@@ -1,6 +1,6 @@
 dashboard:
   ingresses:
-    tesla:
+    until-the-end-of-time:
       enabled: true
       ingressClassName: nginx
       annotations:
