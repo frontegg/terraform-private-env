@@ -4,6 +4,7 @@ dashboard:
       enabled: true
       ingressClassName: nginx
       annotations:
+        external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
         nginx.ingress.kubernetes.io/proxy-body-size: 4m
         nginx.ingress.kubernetes.io/configuration-snippet: |
           more_clear_input_headers "Host" "X-Forwarded-Host";
@@ -17,10 +18,10 @@ dashboard:
             return 403;
           }
         nginx.ingress.kubernetes.io/enable-opentelemetry: "true"
+        alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:109940070146:certificate/2ad1f998-7c88-4249-869f-97e1deb5ee9c
       rules:
         - hostname: "portal.onprem.backegg.io"
           paths:
             - path: /
               servicePort: 80
               pathType: ImplementationSpecific
-
