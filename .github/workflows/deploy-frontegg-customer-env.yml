@@ -159,7 +159,8 @@ jobs:
           helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx \
             --namespace ingress-nginx \
             --create-namespace \
-            --set controller.service.annotations."service.beta.kubernetes.io/aws-load-balancer-security-groups"=${{ steps.tf_outputs.outputs.eks_cluster_security_group_id }}
+            --set controller.service.annotations."service.beta.kubernetes.io/aws-load-balancer-security-groups"=${{ steps.tf_outputs.outputs.eks_cluster_security_group_id }} \
+            --set controller.allowSnippetAnnotations=true
 
       - name: Add ExternalDNS Repository
         run: helm repo add bitnami https://charts.bitnami.com/bitnami && helm repo update
