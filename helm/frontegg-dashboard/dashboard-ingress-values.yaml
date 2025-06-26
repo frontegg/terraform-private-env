@@ -1,4 +1,4 @@
-portal:
+dashboard:
   ingresses:
     tesla:
       enabled: true
