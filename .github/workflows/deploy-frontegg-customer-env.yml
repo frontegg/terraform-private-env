@@ -163,6 +163,7 @@ jobs:
             --set controller.allowSnippetAnnotations=true \
             --set controller.config.allow-snippet-annotations=true \
             --set controller.enableAnnotationValidations=false \
+            --set controller.config.annotation-value-word-blocklist="" \
             --set controller.config.annotations-risk-level=Critical
 
       - name: Wait for NGINX Ingress Controller to be ready
