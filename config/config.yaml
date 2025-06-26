@@ -118,8 +118,8 @@ settings:
           - m5d.large
           - m6i.large
         min_size: 2
-        max_size: 20
-        desired_size: 20
+        max_size: 21
+        desired_size: 21
       managed_node_groups_defaults:
         instance_types:
           - m6i.large
