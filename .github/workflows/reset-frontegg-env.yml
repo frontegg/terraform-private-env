@@ -236,11 +236,11 @@ jobs:
           
           # List all non-internal topics
           echo "Listing non-internal topics..."
-          TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list --exclude-internal)
+          ALL_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list --exclude-internal)
           
-          # Additional filter for our application topics
-          echo "Filtering for our application topics..."
-          TOPICS=$(echo "$TOPICS" | grep -E '^(de-|identity\.|backoffice-service-|frontegg-|builder-|application-|authorization-|authentication-|event-|users-|tenants-|groups-|roles-|audits-|directory-|configuration-|accounts-|migration-|stale-|SLACK_|EMAIL_|SMS_|BELL_|AUDIT_|WEBHOOK_|WEBPUSH_|METADATA_|UPDATE_)' || true)
+          # Remove Amazon MSK internal topics
+          echo "Removing Amazon MSK internal topics..."
+          TOPICS=$(echo "$ALL_TOPICS" | grep -v -E '^(__amazon_msk_|__amazon_|__msk_|__consumer_|__transaction_|_confluent|_schema|connect\.|kafka\.)' || true)
           
           if [ -z "$TOPICS" ]; then
             echo "No application topics found to delete."
@@ -270,8 +270,8 @@ jobs:
           
           # Final verification
           echo "Performing final verification..."
-          REMAINING_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list --exclude-internal | \
-            grep -E '^(de-|identity\.|backoffice-service-|frontegg-|builder-|application-|authorization-|authentication-|event-|users-|tenants-|groups-|roles-|audits-|directory-|configuration-|accounts-|migration-|stale-|SLACK_|EMAIL_|SMS_|BELL_|AUDIT_|WEBHOOK_|WEBPUSH_|METADATA_|UPDATE_)' || true)
+          ALL_REMAINING=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list --exclude-internal)
+          REMAINING_TOPICS=$(echo "$ALL_REMAINING" | grep -v -E '^(__amazon_msk_|__amazon_|__msk_|__consumer_|__transaction_|_confluent|_schema|connect\.|kafka\.)' || true)
           
           if [ -n "$REMAINING_TOPICS" ]; then
             echo "Warning: Some application topics still exist:"
