@@ -1,6 +1,6 @@
 api-gateway:
   ingresses:
-    its-the-end-of-the-world:
+    tesla:
       enabled: true
       ingressClassName: nginx
       annotations:
