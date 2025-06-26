@@ -14,6 +14,7 @@ jobs:
     if: contains(fromJSON('["eyaltam1971"]'), github.actor)
     env:
       AWS_REGION: us-east-1
+      VPC_ID: vpc-0ad20d3162e42d15c
       AWS_ASSUME_ROLE_ARN: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
       EKS_CLUSTER_NAME: private-env-prod-eks
       CROSS_ACCOUNT_ADMIN_ASSUME_ROLE_ARN: arn:aws:iam::109940070146:role/cross-account-admin-assume-role
