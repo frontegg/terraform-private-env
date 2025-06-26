@@ -142,6 +142,19 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v3
 
+      - name: Deploy AWS Load Balancer Controller
+        run: |
+          helm repo add eks https://aws.github.io/eks-charts
+          helm repo update
+          helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
+            -n kube-system \
+            --set clusterName=${{ env.EKS_CLUSTER_NAME }} \
+            --set serviceAccount.create=false \
+            --set serviceAccount.name=aws-load-balancer-controller \
+            --set region=${{ env.AWS_REGION }} \
+            --set vpcId=${{ env.VPC_ID }} \
+            --set image.repository=602401143452.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/amazon/aws-load-balancer-controller
+
       - name: Build MongoDB Helm Chart Dependencies
         run: helm dependency build ./helm/mongodb6
 
