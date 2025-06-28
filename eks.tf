@@ -213,6 +213,7 @@ data "aws_iam_policy_document" "load_balancing" {
       "acm:List*",
       "cognito-idp:Describe*",
       "ec2:CreateSecurityGroup",
+      "ec2:DeleteSecurityGroup"
       "ec2:CreateTags",
       "ec2:DeleteTags",
       "ec2:Describe*",
