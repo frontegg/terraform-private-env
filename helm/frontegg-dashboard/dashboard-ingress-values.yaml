@@ -4,6 +4,7 @@ dashboard:
       enabled: true
       ingressClassName: alb
       annotations:
+        alb.ingress.kubernetes.io/target-type: ip
         external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
         nginx.ingress.kubernetes.io/proxy-body-size: 4m
         nginx.ingress.kubernetes.io/configuration-snippet: |

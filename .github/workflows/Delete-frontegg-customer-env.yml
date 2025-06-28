@@ -20,7 +20,7 @@ jobs:
     env:
       EKS_CLUSTER_NAME: private-env-prod-eks
       AWS_REGION: us-east-1
-    steps:
+    steps:   
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -54,8 +54,7 @@ jobs:
             echo "Pods still exist. Waiting 10 seconds before next check..."
             sleep 10
           done
-          echo "There are still pods running in the frontegg namespace after waiting. Please check and tr
-          y again."
+          echo "There are still pods running in the frontegg namespace after waiting. Please check and try again."
           exit 1
 
       - name: Uninstall NGINX Ingress Controller
@@ -82,12 +81,8 @@ jobs:
             -backend-config="encrypt=true"
 
       - name: Terraform Destroy
-        run: |
-          n=0
-          until [ "$n" -ge 3 ]
-          do
-            terraform destroy -auto-approve && break
-            n=$((n+1))
-            echo "Terraform destroy failed. Retrying ($n/3) in 10 seconds..."
-            sleep 10
-          done 
+        uses: Wandalen/wretry.action@v3.8.0
+        with:
+          command: terraform destroy -auto-approve
+          attempt_limit: 3
+          attempt_delay: 3000 
