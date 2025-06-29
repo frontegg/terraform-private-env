@@ -25,4 +25,4 @@ api-gateway:
           paths:
             - path: /*
               servicePort: 80
-              pathType: Prefix
+              pathType: ImplementationSpecific
