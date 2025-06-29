@@ -71,8 +71,12 @@ jobs:
             -backend-config="dynamodb_table=frontegg-terraform-state-lock" \
             -backend-config="encrypt=true"
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
+      - name: Retry Terraform Apply
+        uses: Wandalen/wretry.action@v3.8.0
+        with:
+          command: terraform apply -auto-approve
+          attempt_limit: 3
+          attempt_delay: 3000
 
       - name: Extract MySQL Terraform Outputs
         id: tf_mysql
