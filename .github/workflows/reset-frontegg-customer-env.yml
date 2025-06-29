@@ -197,81 +197,98 @@ jobs:
           cat << 'EOF' > delete_topics.sh
           #!/bin/bash
           set -e
-          
+
           BOOTSTRAP="$1"
           MAX_RETRIES=3
-          WAIT_TIME=30
-          CHECK_INTERVAL=5
-          
+          WAIT_TIME=10 # seconds between retries
+          DELETE_TIMEOUT=60 # seconds to wait for topic deletion
+
           # Function to check topic deletion status
           check_topic_status() {
             local topic="$1"
             kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --describe --topic "$topic" 2>&1 | grep -q "Topic '$topic' does not exist"
           }
-          
-          # Function to delete a single topic with monitoring
-          delete_single_topic() {
-            topic="$1"
-            echo "Deleting topic: $topic"
-            
-            if ! kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topic "$topic" 2>/dev/null; then
-              echo "Failed to initiate deletion for topic: $topic"
-              return 1
-            fi
-            
-            echo "Waiting for topic $topic to be deleted..."
-            start_time=$(date +%s)
-            while ! check_topic_status "$topic"; do
-              current_time=$(date +%s)
-              if [ $((current_time - start_time)) -gt 60 ]; then
-                echo "Timeout waiting for topic $topic to be deleted"
-                return 1
+
+          # Function to delete a single topic with retries
+          delete_single_topic_with_retries() {
+            local topic="$1"
+            local attempt=1
+
+            while [ $attempt -le $MAX_RETRIES ]; do
+              echo "Attempt $attempt to delete topic: $topic"
+              # Try to delete the topic
+              if kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --delete --topic "$topic" 2>/dev/null; then
+                # Wait for the topic to be deleted
+                echo "Waiting for topic $topic to be deleted..."
+                start_time=$(date +%s)
+                while ! check_topic_status "$topic"; do
+                  current_time=$(date +%s)
+                  if [ $((current_time - start_time)) -gt $DELETE_TIMEOUT ]; then
+                    echo "Timeout waiting for topic $topic to be deleted"
+                    break
+                  fi
+                  sleep 5
+                done
+                # Check if topic is deleted
+                if check_topic_status "$topic"; then
+                  echo "Topic $topic successfully deleted"
+                  return 0
+                else
+                  echo "Topic $topic still exists after deletion attempt"
+                fi
+              else
+                echo "Failed to initiate deletion for topic: $topic"
               fi
-              sleep 5
+              attempt=$((attempt + 1))
+              if [ $attempt -le $MAX_RETRIES ]; then
+                echo "Retrying in $WAIT_TIME seconds..."
+                sleep $WAIT_TIME
+              fi
             done
-            echo "Topic $topic successfully deleted"
-            return 0
+            echo "Failed to delete topic $topic after $MAX_RETRIES attempts"
+            return 1
           }
-          
+
           # List all non-internal topics
           echo "Listing non-internal topics..."
           ALL_TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list --exclude-internal)
-          
-          # Remove Amazon MSK internal topics
-          echo "Removing Amazon MSK internal topics..."
-          TOPICS=$(echo "$ALL_TOPICS" | grep -v -E '^(__amazon_msk_|__amazon_|__msk_|__consumer_|__transaction_|_confluent|_schema|connect\.|kafka\.)' || true)
-          
+
+          # Remove Amazon MSK and other system/internal topics
+          echo "Filtering out system/internal topics..."
+          TOPICS=$(echo "$ALL_TOPICS" | grep -v -E '^(__amazon_msk_|__amazon_|__msk_|__consumer_|__transaction_|_confluent|_schema|connect\\.|kafka\\.)' || true)
+
           if [ -z "$TOPICS" ]; then
             echo "No application topics found to delete."
             exit 0
           fi
-          
+
           echo "Found application topics to delete:"
           echo "$TOPICS"
-          
-          # Try individual deletions
-          echo "Starting individual topic deletions..."
+
+          # Try individual deletions with retries
+          echo "Starting individual topic deletions with retries..."
           failed_topics=""
-          
+
           while IFS= read -r topic; do
-            if ! delete_single_topic "$topic"; then
-              echo "Failed to delete topic: $topic"
-              failed_topics="$failed_topics$topic"$'\n'
+            if [ -n "$topic" ]; then
+              if ! delete_single_topic_with_retries "$topic"; then
+                failed_topics="$failed_topics$topic"$'\n'
+              fi
             fi
-          done
-          
+          done <<< "$TOPICS"
+
           # Check if any topics failed to delete
           if [ -n "$failed_topics" ]; then
-            echo "The following topics failed to delete:"
+            echo "The following topics failed to delete after $MAX_RETRIES attempts:"
             echo "$failed_topics"
             exit 1
           fi
-          
+
           # Final verification
           echo "Performing final verification..."
           ALL_REMAINING=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list --exclude-internal)
-          REMAINING_TOPICS=$(echo "$ALL_REMAINING" | grep -v -E '^(__amazon_msk_|__amazon_|__msk_|__consumer_|__transaction_|_confluent|_schema|connect\.|kafka\.)' || true)
-          
+          REMAINING_TOPICS=$(echo "$ALL_REMAINING" | grep -v -E '^(__amazon_msk_|__amazon_|__msk_|__consumer_|__transaction_|_confluent|_schema|connect\\.|kafka\\.)' || true)
+
           if [ -n "$REMAINING_TOPICS" ]; then
             echo "Warning: Some application topics still exist:"
             echo "$REMAINING_TOPICS"
@@ -280,9 +297,9 @@ jobs:
             echo "All application topics have been deleted successfully!"
           fi
           EOF
-          
+
           chmod +x delete_topics.sh
-          
+
           echo -e "\n=== Executing topic deletion ==="
           kubectl run kafka-admin --image=bitnami/kafka:3.6.1 -i --rm --restart=Never --namespace frontegg \
             --command -- bash -c "
@@ -292,7 +309,7 @@ jobs:
             chmod +x delete_topics.sh
             ./delete_topics.sh '$KAFKA_BOOTSTRAP'
             " < delete_topics.sh
-          
+
           echo -e "\n=== Topics AFTER deletion ==="
           kubectl run kafka-admin --image=bitnami/kafka:3.6.1 -i --rm --restart=Never --namespace frontegg \
             --command -- bash -c "
