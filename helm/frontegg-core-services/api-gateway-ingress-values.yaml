@@ -24,6 +24,6 @@ api-gateway:
       rules:
         - hostname: "*.onprem.backegg.io"
           paths:
-            - path: /*
+            - path: /
               servicePort: 80
-              pathType: ImplementationSpecific
+              pathType: Prefix
